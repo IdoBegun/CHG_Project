@@ -270,14 +270,13 @@ def load_trans_dictionary_gen(hapDict):
     Some dictionaries may contain a single value.
     '''
     
-    res = [dict() for y in range(len(hapDict))]
-    count = 0
+    length = len(hapDict)
+    res = [dict() for y in range(length)]
     
-    for x in hapDict:
-        for y in hapDict:
-            res[count][x + y] = hapDict[x] + hapDict[y]
-        
-        count += 1
+    for i in range(length):
+        for x in hapDict[i]:
+            for y in hapDict[i]:
+                res[i][x + y] = hapDict[i][x] + hapDict[i][y]
     
     return res    
 
@@ -325,6 +324,47 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
     outputFileHandle.close()  
 
 ################################################################################
+#                            translate_input_data                              #
+################################################################################
+
+def translate_input_data(inputDir, outputDir, filename, genDict):
+    '''
+    Input:
+    inputDir - Name of directory containing genotype input data
+    outputDir - Name of directory to store the translated data
+    filename - Name of the file to translate
+    genDict - Genotype translation dictionary
+    
+    Output:
+    None- creates a file identical to the original file, where all the genotype
+            data is translated according to genDict
+    '''
+    
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+    
+    inputFilename = inputDir + '/' + filename
+    outputFilename = outputDir + '/' + filename
+    inputFileHandle = open(inputFilename, 'r')
+    outputFileHandle = open(outputFilename, 'w')
+    
+    length = len(genDict)
+    
+    line = inputFileHandle.readline()
+    splitLine = line.split()
+        
+    for i in range(length):
+        translated = str(genDict[i][splitLine[i]])
+        outputFileHandle.write(translated)
+        if i != (length - 1):
+            outputFileHandle.write(' ')
+        
+    outputFileHandle.write('\n')    
+            
+    inputFileHandle.close()
+    outputFileHandle.close()  
+
+################################################################################
 #                              read_snp_data_file                              #
 ################################################################################
 
@@ -350,26 +390,22 @@ def read_snp_data_file(filename):
     return res
 
 ################################################################################
-#                              read_snp_data_file                              #
+#                              read_person_list_file                              #
 ################################################################################
 
-def read_person_list_file(filename):
+def read_person_list_file(inputDir):
     '''
     Input:
-    filename - Name of the file containing SNP data
+    inputDir - Name of a directory containing the personList file
 
     Output:
-    A list containing the number of SNPs in each chromosome
+    A list containing all person IDs in the personList file
     '''
     
-    fileHandle = open(filename,'r')
-    fileHandle.readline()
-    res = [0 for x in range(numChrom)]
-    
-    for line in fileHandle:
-        splitLine = line.split()
-        currChrom = int(splitLine[1][3:])
-        res[currChrom - 1] += 1 
+    fileName = inputDir + '/' + personListFilename
+    fileHandle = open(fileName, 'r')
+    line = fileHandle.readline()
+    res = line.split() 
     
     fileHandle.close()
     return res
@@ -431,7 +467,7 @@ else:
     simplify_input_data(inputDataFile, snpInfo, inputDataDirectory)
     print "Done"
 
-
+personList = read_person_list_file(inputDataDirectory)
 
 print "--> Translating input data..." ,
 if os.path.exists(translatedInputDataDirecotry):
@@ -441,6 +477,11 @@ else:
         hapDict = load_trans_dictionary_hap(translationDirectory, snpInfo,\
                                             i + 1)
         genDict = load_trans_dictionary_gen(hapDict)
+        for person in personList:
+            filename = person + '_' + str(i + 1)
+            translate_input_data(inputDataDirectory,\
+                                 translatedInputDataDirecotry, filename,\
+                                 genDict)
         
     print "Done"
 
