@@ -220,7 +220,7 @@ void createResultFile(unsigned int chromozomeNumber,
                       vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes)
 {
   stringstream ss;
-  ss << "chrom" << chromozomeNumber << "_output";
+  ss << "chrom" << chromozomeNumber << "_output.txt";
   string fileName = ss.str();
 
   ofstream file;
