@@ -28,11 +28,20 @@ inputDataFile = "haplotypes1"
 # Directories
 inputDataDirectory = "input_data"
 refDataDirectory = "ref_data"
+snpDataDirectory = "snp_data"
 translationDirectory = "translation"
 translatedRefDataDirecotry = "ref_data_trans"
 translatedInputDataDirecotry = "input_data_trans"
+processedDataDirectory = "processed_data"
+
+# Parameters
+epsilon = 0.00001
 
 phase = 1
+
+# Debug
+DEBUG = True
+chromsToCompute = 1
 
 ################################################################################
 #                             simplify_input_data                              #
@@ -47,9 +56,9 @@ def simplify_input_data(filename, snpCount, outDir):
     
     Output:
     None - fills outDir with files in the format of:
-        Filename - <person_id>_<chromosome number>
-        Content -  Haplotype data for the relevant person for the relevant
-        chromosome
+        Filename - chrom_<chrom number>
+        Content -  Each line contains genotype data for the relevant person
+        for the relevant chromosome
     Also creates a file named "personList" which contains a list of all
     person IDs
     '''
@@ -57,14 +66,17 @@ def simplify_input_data(filename, snpCount, outDir):
     if not os.path.exists(outDir):
         os.makedirs(outDir)
     
-    fileHandle = open(filename, 'r')
-    x = fileHandle.read(1)
+    inputFileHandle = open(filename, 'r')
+    x = inputFileHandle.read(1)
     st = ""
-    outputFileHandle = None
     chrom = 0
     counter = None
     name = None
     personCounter = 0
+    outputFileHandles = []
+    for chrom in range(numChrom):
+        outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
+        
     personListFileHandle = open(outDir + "/" + personListFilename, 'w')
         
     while x:
@@ -73,18 +85,14 @@ def simplify_input_data(filename, snpCount, outDir):
                 if chrom > numChrom: # Sanity
                     print "Error: simplify_input_data: chromosome number mismatch"
                     sys.exit();
-                outputFileHandle.write(st)
+                outputFileHandles[chrom - 1].write(st)
                 counter += 1
                 if counter == snpCount[chrom - 1]:
-                    outputFileHandle.write('\n')
-                    outputFileHandle.close()
+                    outputFileHandles[chrom - 1].write('\n')
                     chrom += 1
                     counter = 0
-                    if chrom <= numChrom:
-                        outFileName = name + "_" + str(chrom)
-                        outputFileHandle = open(outDir + "/" + outFileName,'w')
                 else:
-                    outputFileHandle.write(' ')
+                    outputFileHandles[chrom - 1].write(' ')
             else:
                 #if personCounter != 0:
                 #    print "Done."
@@ -93,22 +101,67 @@ def simplify_input_data(filename, snpCount, outDir):
                 chrom = 1
                 if personCounter != 0:
                     personListFileHandle.write(' ')
+                    if DEBUG:
+                        print "Done."
                 personListFileHandle.write(name)
                 personCounter += 1
-                #print "--> simplify_input_data: Started reading person %s..." % (personCounter),
-                outFileName = name + "_" + str(chrom)
-                outputFileHandle = open(outDir + "/" + outFileName,'w')
+                if DEBUG:
+                    print "--> --> simplify_input_data: Started reading person %s (%s)..." % (name, personCounter),
             st = ""
         else:
             st += x
-        x = fileHandle.read(1)
+        x = inputFileHandle.read(1)
     
     personListFileHandle.write('\n')
+    print "Done."
     personListFileHandle.close()
-    outputFileHandle.close()
-    #print "Done."
-    fileHandle.close()
+    for fileHandle in outputFileHandles:
+        fileHandle.close()
+    inputFileHandle.close()
 
+################################################################################
+#                             simplify_snp_data                                #
+################################################################################
+
+def simplify_snp_data(filename, outDir):
+    '''
+    Input:
+    filename - Name of the file containing haplotypes input data
+    outDir - Name of the directory which will contain all output files
+    
+    Output:
+    None - fills outDir with files in the format of:
+        Filename - chrom_<chrom number>
+        Content -  Each line contains SNP data for the relevant SNP:
+        name and offset
+    '''
+    
+    if not os.path.exists(outDir):
+        os.makedirs(outDir)
+    
+    inputFileHandle = open(filename, 'r')
+    inputFileHandle.readline()
+    
+    outputFileHandles = []
+    for chrom in range(numChrom):
+        outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
+    
+    
+    for line in inputFileHandle:
+        splitLine = line.split()
+        chrom = int(splitLine[1][3:])
+        
+        snpName = splitLine[0]
+        snpOffset = splitLine[2]
+        
+        outputFileHandles[chrom - 1].write(snpName + ' ' + snpOffset + '\n')
+    
+    for fileHandle in outputFileHandles:
+        fileHandle.close()
+    
+    inputFileHandle.close()
+
+    
 ################################################################################
 #                              simplify_ref_data                               #
 ################################################################################
@@ -157,13 +210,16 @@ def simplify_ref_data(filename, snpCount, outDir):
             for person in data:
                 outputFileHandle.write(' '.join(person) + '\n')
             outputFileHandle.close()
-            #print "Done."
-            #print "--> simplify_ref_data: Started reading data for chromosome %s..." % (chrom),
+            if chrom != 1:
+                print "Done."
+            print "--> --> simplify_ref_data: Started reading data for "\
+                    "chromosome %s/%s..." % (chrom, numChrom),
             chrom += 1
             count = 0
             del data
             data = [[] for y in range(numPersons)]
     
+    print "Done."
     fileHandle.close()
     #print "Done."
     
@@ -315,8 +371,6 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
         for i in range(length):
             translated = str(hapDict[i][splitLine[i]])
             outputFileHandle.write(translated)
-            if i != (length - 1):
-                outputFileHandle.write(' ')
         
         outputFileHandle.write('\n')    
             
@@ -327,12 +381,12 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
 #                            translate_input_data                              #
 ################################################################################
 
-def translate_input_data(inputDir, outputDir, filename, genDict):
+def translate_input_data(inputDir, outputDir, chrom, genDict):
     '''
     Input:
     inputDir - Name of directory containing genotype input data
     outputDir - Name of directory to store the translated data
-    filename - Name of the file to translate
+    chrom - Chromosome number
     genDict - Genotype translation dictionary
     
     Output:
@@ -343,6 +397,7 @@ def translate_input_data(inputDir, outputDir, filename, genDict):
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     
+    filename = "chrom_" + str(chrom)
     inputFilename = inputDir + '/' + filename
     outputFilename = outputDir + '/' + filename
     inputFileHandle = open(inputFilename, 'r')
@@ -350,47 +405,72 @@ def translate_input_data(inputDir, outputDir, filename, genDict):
     
     length = len(genDict)
     
-    line = inputFileHandle.readline()
-    splitLine = line.split()
+    for line in inputFileHandle:
+        splitLine = line.split()
+        for i in range(length):
+            translated = str(genDict[i][splitLine[i]])
+            outputFileHandle.write(translated)
         
-    for i in range(length):
-        translated = str(genDict[i][splitLine[i]])
-        outputFileHandle.write(translated)
-        if i != (length - 1):
-            outputFileHandle.write(' ')
-        
-    outputFileHandle.write('\n')    
+        outputFileHandle.write('\n')
             
     inputFileHandle.close()
     outputFileHandle.close()  
 
 ################################################################################
-#                              read_snp_data_file                              #
+#                             count_snps_in_chrom                              #
 ################################################################################
 
-def read_snp_data_file(filename):
+def count_snps_in_chrom(inputDir):
     '''
     Input:
-    filename - Name of the file containing SNP data
+    inputDir - Name of the directory containing SNP data files for
+                each chromosome
 
     Output:
     A list containing the number of SNPs in each chromosome
     '''
-    
-    fileHandle = open(filename,'r')
-    fileHandle.readline()
+
     res = [0 for x in range(numChrom)]
+    for chrom in range(numChrom):
+        filename = inputDir + "/chrom_" + str(chrom + 1)
+        fileHandle = open(filename,'r')
+        while fileHandle.readline():
+            res[chrom] += 1
+        
+        fileHandle.close()
+        
+    return res
+
+################################################################################
+#                               get_snp_offsets                                #
+################################################################################
+
+def get_snp_offsets(inputDir, chrom, snpCount):
+    '''
+    Input:
+    inputDir - Name of the directory containing SNP data files
+    chrom - Chromosome number
+    snpCount - A list containing how many SNPs are in each chromosome
+
+    Output:
+    A list containing the offset of each SNPs in the given chromosome
+    '''
+    
+    fileHandle = open(inputDir + "/chrom_" + str(chrom),'r')
+    res = [0 for x in range(snpCount[chrom - 1])]
+    count = 0
     
     for line in fileHandle:
         splitLine = line.split()
-        currChrom = int(splitLine[1][3:])
-        res[currChrom - 1] += 1 
+        offset = int(splitLine[1])
+        res[count] = offset
+        count += 1
     
     fileHandle.close()
     return res
 
 ################################################################################
-#                              read_person_list_file                              #
+#                            read_person_list_file                             #
 ################################################################################
 
 def read_person_list_file(inputDir):
@@ -411,49 +491,228 @@ def read_person_list_file(inputDir):
     return res
 
 ################################################################################
+#                          read_translated_chrom_data                          #
+################################################################################
+
+def read_translated_chrom_data(filename):
+    '''
+    Input:
+    filename - Name of the file containing the data
+    
+    Output:
+    A list containing data from the file (haplotype or genotype data). Each
+    entry represents a different persson or haplotype
+    '''
+    
+    fileHandle = open(filename, 'r')
+    res = []
+    for line in fileHandle:
+        res.append(line.strip()) 
+    
+    fileHandle.close()
+    return res
+
+################################################################################
+#                          compute_allele_frequencies                          #
+################################################################################
+
+def compute_allele_frequencies(hapData):
+    '''
+    Input:
+    hapData - A list of haplotypa data (strings)
+    
+    Output:
+    A list containing allele frequencies. Each entry represents the frequency
+    of the allele represented by '1'
+    '''
+    
+    numPop = len(hapData)
+    s = len(hapData[0][0])
+    
+    res = [[] for x in range(numPop)]
+    for i in range(s):
+        for j in range(numPop):
+            #for hap in hapData:
+            #    print i, hap[i]
+            ones = [int(hap[i]) for hap in hapData[j]]
+        
+            res[j].append(sum(ones))
+    
+    for i in range(numPop):
+        res[i] = [float(x) / len(hapData[i]) for x in res[i]]
+    
+    return res
+
+################################################################################
+#                          compute_allele_correlation                          #
+################################################################################
+
+def compute_allele_correlation(hapData, ind1, ind2):
+    '''
+    Input:
+    hapData - A list of haplotypa data (strings)
+    
+    Output:
+    Probability that both indices have the allele represented by '1'
+    '''
+    count = 0
+    for hap in hapData:
+        if (hap[ind1] == '1' and hap[ind2] == '1'):
+            count += 1
+    
+    res = float(count) / len(hapData)
+    
+    return res
+
+################################################################################
+#                               compute_LD_windows                             #
+################################################################################
+
+def compute_LD_windows(hapData, epsilon):
+    '''
+    Input:
+    hapData - A list of haplotypa data (strings)
+    epsilon - Maximum threshold for LD score
+    
+    Output:
+    A list containing windows in which both start and end indices have LD
+    value of at most epsilon
+    '''
+    
+    numPop = len(hapData)
+    hapLen = len(hapData[0][0])
+    
+    alleleFreqs = compute_allele_frequencies(hapData)
+    res = []
+    
+    i = 0
+    j = 1
+    while (j < hapLen):
+        viable = True
+        for k in range(numPop):
+            alleleCorr = compute_allele_correlation(hapData[k], i, j)
+        
+            D = abs(alleleCorr - (alleleFreqs[k][i] * alleleFreqs[k][j]))
+            
+            if (D > epsilon):
+                viable = False
+                break
+            
+        if viable:
+            res.append((i,j))
+            i = j + 1
+            j = i + 1
+        else:
+            j = j + 1
+    
+    if (((i, j - 1)) != res[-1]):
+        res.append((i, j - 1))
+    
+    return res
+
+################################################################################
+#                                 load_LD_windows                               #
+################################################################################
+
+def load_LD_windows(directory, hapData, epsilon):
+    '''
+    Input:
+    directory - Directory to save the data to or load from
+    hapData - A list of haplotypa data (strings)
+    epsilon - Maximum threshold for LD score
+    
+    Output:
+    List of LD windows. The list is loaded from a file if it exists, otherwise
+    the file is created
+    '''
+    print "--> --> Computing LD windows...",
+    filename = directory + '/ld_windows'
+    if not os.path.exists(filename):
+        res = compute_LD_windows(hapData, epsilon)
+        
+        fileHandle = open(filename, 'w')
+        for window in res:
+            fileHandle.write(str(window[0]) + ' ' + str(window[1]) + '\n')
+            
+        fileHandle.close()
+        print "Done"
+    
+    else:
+        res = []
+        fileHandle = open(filename, 'r')
+        
+        for line in fileHandle:
+            splitLine = line.split()
+            start = int(splitLine[0])
+            end = int(splitLine[1])
+            res.append((start, end))
+        
+        print "Skipping"
+    
+    return res
+        
+################################################################################
 #                                    MAIN                                      #
 ################################################################################
 
 
 print "################################################################################"
 print "Phase %s: Processing reference data files" % phase
-
+''
 print "--> Loading SNP data..." ,
-snpInfo = read_snp_data_file(snpInfoFile)
-print "Done"
+if os.path.exists(snpDataDirectory):
+    print "Skipping"
+else:
+    simplify_snp_data(snpInfoFile, snpDataDirectory)
+    print "Done"
+
+snpCount = count_snps_in_chrom(snpDataDirectory)
 
 print "--> Preprocessing reference data...",
 if os.path.exists(refDataDirectory):
     print "Skipping"
 else:
     print "\n    --> Processing European reference data..." ,
-    simplify_ref_data(ceuFile, snpInfo, refDataDirectory)
-    print "Done"
+    simplify_ref_data(ceuFile, snpCount, refDataDirectory)
+    if not DEBUG:
+        print "\nDone"
     print "    --> Processing African reference data..." ,
-    simplify_ref_data(yriFile, snpInfo, refDataDirectory)
-    print "Done"
+    simplify_ref_data(yriFile, snpCount, refDataDirectory)
+    if not DEBUG:
+        print "\nDone"
 
 print "--> Creating translation dictionary..." ,
 if os.path.exists(translationDirectory):
     print "Skipping"
 else:
     for i in range(numChrom):
-        create_translator(refDataDirectory, translationDirectory, snpInfo,\
+        if DEBUG:
+            print "--> --> Translating reference data for chromosome "\
+            "%s/%s..." % (i+1, numChrom) ,
+        create_translator(refDataDirectory, translationDirectory, snpCount,\
                            populationNames, i + 1)
-    print "Done"
+        if DEBUG:
+            print "Done."
+    if not DEBUG:
+        print "\nDone"
 
-print "--> Translating reference data..." ,
+print "--> Translating reference data..."
 if os.path.exists(translatedRefDataDirecotry):
     print "Skipping"
 else:
     for i in range(numChrom):
-        hapDict = load_trans_dictionary_hap(translationDirectory, snpInfo,\
+        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount,\
                                             i + 1)
+        if DEBUG:
+            print "--> --> Translating reference data for chromosome "\
+                    "%s/%s..." % (i+1, numChrom) ,
         for name in populationNames:
             translate_ref_data(refDataDirectory, translatedRefDataDirecotry,\
                                hapDict, name, i + 1)
-        
-    print "Done"    
+        if DEBUG:
+            print "Done."
+    if not DEBUG:  
+        print "\nDone"    
 
 phase += 1
 
@@ -464,28 +723,52 @@ print "--> Preprocessing input data...",
 if os.path.exists(inputDataDirectory):
     print "Skipping"
 else:
-    simplify_input_data(inputDataFile, snpInfo, inputDataDirectory)
-    print "Done"
+    simplify_input_data(inputDataFile, snpCount, inputDataDirectory)
+    if not DEBUG:
+        print "\nDone."
 
-personList = read_person_list_file(inputDataDirectory)
+#personList = read_person_list_file(inputDataDirectory)
 
 print "--> Translating input data..." ,
 if os.path.exists(translatedInputDataDirecotry):
     print "Skipping"
 else:
     for i in range(numChrom):
-        hapDict = load_trans_dictionary_hap(translationDirectory, snpInfo,\
+        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount,\
                                             i + 1)
         genDict = load_trans_dictionary_gen(hapDict)
-        for person in personList:
-            filename = person + '_' + str(i + 1)
-            translate_input_data(inputDataDirectory,\
-                                 translatedInputDataDirecotry, filename,\
-                                 genDict)
+        translate_input_data(inputDataDirectory, translatedInputDataDirecotry,
+                            i + 1, genDict)
         
     print "Done"
 
 
 phase += 1
+
+print "################################################################################"
+print "Phase %s: Processing data for each chromosome" % phase
+
+if chromsToCompute == 0:
+    chromsToCompute = numChrom
+
+if not os.path.exists(processedDataDirectory):
+    os.makedirs(processedDataDirectory)
+
+for chrom in range(chromsToCompute):
+    chromProcessedDirectory = processedDataDirectory + '/' + str(chrom + 1)
+    if not os.path.exists(chromProcessedDirectory):
+        os.makedirs(chromProcessedDirectory)
+    print "--> Creating windows for chromosome %s..." % (chrom + 1)
+    hapData = []
+    for name in populationNames:
+        filename = translatedRefDataDirecotry + '/' + name + '_' + \
+                    str(chrom + 1)
+        refHaps = read_translated_chrom_data(filename)
+        hapData.append(refHaps)
+    
+    ld_windows = load_LD_windows(chromProcessedDirectory, hapData, epsilon)
+    
+    
+
 
 print "################################################################################"
