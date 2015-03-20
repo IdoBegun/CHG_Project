@@ -19,7 +19,7 @@ inputDataFile = "haplotypes1"
 
 # Directories
 inputDataDirectory = "input_data"
-refDataDirectory = "IBD_main"
+refDataDirectory = "ref_data"
 snpDataDirectory = "snp_data"
 translationDirectory = "translation"
 translatedRefDataDirecotry = "ref_data_trans"
