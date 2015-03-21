@@ -2,6 +2,7 @@
 
 import os, sys
 from global_params import numChrom
+from common import compute_allele_correlation, compute_allele_frequencies
 
 
 ################################################################################
@@ -64,58 +65,6 @@ def simplify_ref_data(filename, snpCount, outDir):
     print "Done."
     fileHandle.close()
     #print "Done."
-
-################################################################################
-#                          compute_allele_frequencies                          #
-################################################################################
-
-def compute_allele_frequencies(hapData):
-    '''
-    Input:
-    hapData - A list of haplotypa data (strings)
-    
-    Output:
-    A list containing allele frequencies. Each entry represents the frequency
-    of the allele represented by '1'
-    '''
-    
-    numPop = len(hapData)
-    s = len(hapData[0][0])
-    
-    res = [[] for x in range(numPop)]
-    for i in range(s):
-        for j in range(numPop):
-            #for hap in hapData:
-            #    print i, hap[i]
-            ones = [int(hap[i]) for hap in hapData[j]]
-        
-            res[j].append(sum(ones))
-    
-    for i in range(numPop):
-        res[i] = [float(x) / len(hapData[i]) for x in res[i]]
-    
-    return res
-
-################################################################################
-#                          compute_allele_correlation                          #
-################################################################################
-
-def compute_allele_correlation(hapData, ind1, ind2):
-    '''
-    Input:
-    hapData - A list of haplotypa data (strings)
-    
-    Output:
-    Probability that both indices have the allele represented by '1'
-    '''
-    count = 0
-    for hap in hapData:
-        if (hap[ind1] == '1' and hap[ind2] == '1'):
-            count += 1
-    
-    res = float(count) / len(hapData)
-    
-    return res
 
 ################################################################################
 #                               compute_LD_windows                             #

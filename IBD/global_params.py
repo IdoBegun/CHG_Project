@@ -26,8 +26,15 @@ translatedRefDataDirecotry = "ref_data_trans"
 translatedInputDataDirecotry = "input_data_trans"
 processedDataDirectory = "processed_data"
 
-# Parameters
-epsilon = 0.00001
+# Location of the IBD executable file
+ibdExe = ""
+
+# Location of the BEAGLE executable file
+beagleExe = ""
+
+# When calculating dependencies between SNPs, this is the maximum value
+# we consider as independent
+indEpsilon = 0.00001
 
 phase = 1
 

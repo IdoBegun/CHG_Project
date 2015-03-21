@@ -2,10 +2,10 @@
 
 import os
 
-import IBD.reference_data as RD
-import IBD.simulator_data as SD
-import IBD.translator as translator
-import IBD.common as common
+from IBD.reference_data import *
+from IBD.simulator_data import *
+from IBD.translator import *
+from IBD.common import *
 from IBD.global_params import *
 
 ################################################################################
@@ -22,21 +22,21 @@ print "--> Loading SNP data..." ,
 if os.path.exists(snpDataDirectory):
     print "Skipping"
 else:
-    SD.simplify_snp_data(snpInfoFile, snpDataDirectory)
+    simplify_snp_data(snpInfoFile, snpDataDirectory)
     print "Done"
 
-snpCount = common.count_snps_in_chrom(snpDataDirectory)
+snpCount = count_snps_in_chrom(snpDataDirectory)
 
 print "--> Simplfying reference data...",
 if os.path.exists(refDataDirectory):
     print "Skipping"
 else:
-    print "\n    --> Simplfying European reference data..." ,
-    RD.simplify_ref_data(ceuFile, snpCount, refDataDirectory)
+    print "\n--> Simplfying European reference data..."
+    simplify_ref_data(ceuFile, snpCount, refDataDirectory)
     if not DEBUG:
         print "\nDone"
-    print "    --> Simplfying African reference data..." ,
-    RD.simplify_ref_data(yriFile, snpCount, refDataDirectory)
+    print "--> Simplfying African reference data..."
+    simplify_ref_data(yriFile, snpCount, refDataDirectory)
     if not DEBUG:
         print "\nDone"
 
@@ -48,8 +48,8 @@ else:
         if DEBUG:
             print "--> --> Translating reference data for chromosome "\
             "%s/%s..." % (i+1, numChrom) ,
-        translator.create_translator(refDataDirectory, translationDirectory, \
-                                     snpCount, populationNames, i + 1)
+        create_translator(refDataDirectory, translationDirectory, snpCount, \
+                          populationNames, i + 1)
         if DEBUG:
             print "Done."
     if not DEBUG:
@@ -60,15 +60,14 @@ if os.path.exists(translatedRefDataDirecotry):
     print "Skipping"
 else:
     for i in range(chromsToCompute):
-        hapDict = translator.load_trans_dictionary_hap(translationDirectory, \
-                                                       snpCount, i + 1)
+        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount, \
+                                            i + 1)
         if DEBUG:
             print "--> --> Translating reference data for chromosome "\
                     "%s/%s..." % (i+1, numChrom) ,
         for name in populationNames:
-            translator.translate_ref_data(refDataDirectory, \
-                                          translatedRefDataDirecotry, \
-                                          hapDict, name, i + 1)
+            translate_ref_data(refDataDirectory, translatedRefDataDirecotry, \
+                               hapDict, name, i + 1)
         if DEBUG:
             print "Done."
     if not DEBUG:  
@@ -97,11 +96,11 @@ for chrom in range(chromsToCompute):
         for name in populationNames:
             filename = translatedRefDataDirecotry + '/' + name + '_' + \
                         str(chrom + 1)
-            refHaps = common.read_translated_chrom_data(filename)
+            refHaps = read_translated_chrom_data(filename)
             hapData.append(refHaps)
             
-        ld_windows = RD.load_LD_windows(chromProcessedDirectory, hapData, \
-                                        epsilon)
+        ld_windows = load_LD_windows(chromProcessedDirectory, hapData, \
+                                     indEpsilon)
     
 phase += 1   
 
@@ -112,7 +111,7 @@ print "--> Preprocessing input data...",
 if os.path.exists(inputDataDirectory):
     print "Skipping"
 else:
-    SD.simplify_input_data(inputDataFile, snpCount, inputDataDirectory)
+    simplify_input_data(inputDataFile, snpCount, inputDataDirectory)
     if not DEBUG:
         print "\nDone."
 
@@ -123,16 +122,15 @@ if os.path.exists(translatedInputDataDirecotry):
     print "Skipping"
 else:
     for i in range(chromsToCompute):
-        hapDict = translator.load_trans_dictionary_hap(translationDirectory, \
-                                                       snpCount, i + 1)
-        genDict = translator.load_trans_dictionary_gen(hapDict)
-        translator.translate_input_data(inputDataDirectory, \
-                                        translatedInputDataDirecotry, \
-                                        i + 1, genDict)
+        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount, \
+                                            i + 1)
+        genDict = load_trans_dictionary_gen(hapDict)
+        translate_input_data(inputDataDirectory, \
+                             translatedInputDataDirecotry, i + 1, genDict)
         
     print "Done"
 
-personList = SD.load_person_list(inputDataDirectory, personListFilename)
+personList = load_person_list(inputDataDirectory, personListFilename)
 phase += 1
 
 print "################################################################################"
