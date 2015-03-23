@@ -44,48 +44,54 @@ void getDataFromFile(string& fileName, vector<string>& population)
   file.close();
 }
 
-void getData(unsigned int chromozomeNumber, unsigned int window,
-                       vector<string>& simulator/*out*/,
-                       vector<string> populationA/*out*/,
-                       vector<string> populationB/*out*/)
+void getData(string& path, unsigned int chromozomeNumber, unsigned int window,
+             vector<string>& simulator/*out*/,
+             vector<string> populationA/*out*/,
+             vector<string> populationB/*out*/)
 {
   // read the simulator data
   stringstream ssSimulator;
-  ssSimulator << "chrom" << chromozomeNumber << "_win" << window << "_pop0.txt"; // population0 = simulator data
+  ssSimulator << path << "\\chrom" << chromozomeNumber << "\\pop0\\win" << window << ".txt"; // population0 = simulator data
   string fileNameSimulator = ssSimulator.str();
   getDataFromFile(fileNameSimulator, simulator/*out*/);
 
   // read the reference data of population A
   stringstream ssPopulationA;
-  ssPopulationA << "chrom" << chromozomeNumber << "_win" << window << "_pop1.txt"; // population1 = reference data of population A
+  ssPopulationA << path << "\\chrom" << chromozomeNumber << "\\pop1\\win" << window << ".txt"; // population1 = reference data of population A
   string fileNamePopulationA = ssPopulationA.str();
   getDataFromFile(fileNamePopulationA, populationA/*out*/);
 
   // read the reference data of population B
   stringstream ssPopulationB;
-  ssPopulationB << "chrom" << chromozomeNumber << "_win" << window << "_pop2.txt"; // population2 = reference data of population B
+  ssPopulationB << path << "\\chrom" << chromozomeNumber << "\\pop2\\win" << window << ".txt"; // population2 = reference data of population B
   string fileNamePopulationB = ssPopulationB.str();
   getDataFromFile(fileNamePopulationB, populationB/*out*/);
 }
 
-void calculateWindows(unsigned int chromozomeNumber, unsigned int numOfWindows, unsigned int numOfHaplotypes, double epsilon,
+void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int numOfWindows, unsigned int numOfHaplotypes, double epsilon,
                       vector< vector< vector<double> > >& windowScore/*out*/, 
                       vector< vector< vector<bool> > >& maxArgIBDWindow/*out*/, 
-                      vector< vector< vector<double> > >& windowDiff/*out*/)
+                      vector< vector< vector<double> > >& windowDiff/*out*/,
+                      bool debug)
 {
   resizeVectors(numOfWindows, numOfHaplotypes, windowScore/*out*/, maxArgIBDWindow/*out*/, windowDiff/*out*/);
 
   for (unsigned int window = 0 ; window < numOfWindows ; window++)
   {
+    if (debug)
+    {
+      cout << "calculateWindows - window: " << window << "-" << numOfWindows-1 << endl;
+    }
+
     // read the data of the current window (simulator data & reference data from both populations
     vector<string> simulator;
     vector<string> populationA;
     vector<string> populationB;
-    getData(chromozomeNumber, window, simulator/*out*/, populationA/*out*/, populationB/*out*/);
+    getData(path, chromozomeNumber, window, simulator/*out*/, populationA/*out*/, populationB/*out*/);
 
     // build the LD trees according to the populations' data
-    LDTree treeA = LDTree(populationA);
-    LDTree treeB = LDTree(populationB);
+    LDTree treeA = LDTree(populationA, debug);
+    LDTree treeB = LDTree(populationB, debug);
 
     // calculate the probability for each haplotype from the simulator data in each populatio
     vector<double> simulatorProbabilityA(simulator.size(), 0);
@@ -102,6 +108,12 @@ void calculateWindows(unsigned int chromozomeNumber, unsigned int numOfWindows, 
     {
       for (unsigned int j = i+1 ; j < simulator.size() ; j++)
       {
+        if (debug)
+        {
+          cout << "calculateWindows - window: " << window << "-" << numOfWindows-1 
+            << " haplotypes: " << i << "-" << j << " (" << simulator.size() << ")" << endl;
+        }
+
         double origIA = simulatorProbabilityA[i];
         double origIB = simulatorProbabilityB[i];
         double origJA = simulatorProbabilityA[j];
@@ -126,6 +138,15 @@ void calculateWindows(unsigned int chromozomeNumber, unsigned int numOfWindows, 
         windowScore[window][i][j] = totalIBD / totalNonIBD; // the window score for haplotypes i & j
         maxArgIBDWindow[window][i][j] = (ibdA > ibdB); // in which population there is a better chance for an IBD - true==>A, false==>B
         windowDiff[window][i][j] = abs(ibdA - ibdB); // what is the difference between the IBD probability in the populations
+
+        if (debug)
+        {
+          cout << "calculateWindows - window: " << window << "-" << numOfWindows-1 
+            << " haplotypes: " << i << "-" << j << " (" << simulator.size() << ")" 
+            << " window score: " << windowScore[window][i][j]
+            << " is IBD_A: " << maxArgIBDWindow[window][i][j] 
+            << " window diff: " << windowDiff[window][i][j] << endl;
+        }
       }
     }
   }
@@ -181,7 +202,8 @@ void calculateBlocks(unsigned int numOfWindows, unsigned int numOfHaplotypes, un
                      vector< vector< vector<double> > >& windowScore, 
                      vector< vector< vector<bool> > >& maxArgIBDWindow, 
                      vector< vector< vector<double> > >& windowDiff,
-                     vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes/*out*/)
+                     vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes/*out*/,
+                     bool debug)
 {
   unsigned int numOfBlocks = numOfWindows - blockSize + 1;
   IBDHaplotypes.resize(numOfBlocks);
@@ -194,6 +216,11 @@ void calculateBlocks(unsigned int numOfWindows, unsigned int numOfHaplotypes, un
     unsigned int startWin = blockNum;
     unsigned int endWin = blockNum + blockSize;
 
+    if (debug)
+    {
+      cout << "calculateBlocks - block: " << blockNum << "-" << numOfBlocks-1 << "(size of block-" << blockSize << ")" << endl;
+    }
+
     for (unsigned int i = 0 ; i < numOfHaplotypes ; i++)
     {
       for (unsigned int j = i+1 ; j < numOfHaplotypes ; j++)
@@ -205,6 +232,12 @@ void calculateBlocks(unsigned int numOfWindows, unsigned int numOfHaplotypes, un
           blockScore *= windowScore[blockNum][i][j];
         }
 
+        if (debug)
+        {
+          cout << "calculateBlocks - block: " << blockNum << "-" << numOfBlocks-1
+            << " haplotypes: " << i << "-" << j << " (" << numOfHaplotypes << ")" 
+            << " block score: " << blockScore  << "(threshold=" << threshold << ")" << endl;
+        }
         // if the blockScore is big enough (bigger than the threshold) and there is an IBD series of the same population,
         // i and j are IBD in this block ==> they are added to IBDHaplotypes[blockNum]
         if ((blockScore >= threshold) && (checkIBD(startWin, endWin, i, j, maxDiff, maxArgIBDWindow, windowDiff)))
@@ -216,11 +249,12 @@ void calculateBlocks(unsigned int numOfWindows, unsigned int numOfHaplotypes, un
   }
 }
 
-void createResultFile(unsigned int chromozomeNumber,
-                      vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes)
+void createResultFile(string& path, unsigned int chromozomeNumber,
+                      vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes,
+                      bool debug)
 {
   stringstream ss;
-  ss << "chrom" << chromozomeNumber << "_output.txt";
+  ss << path << "\\chrom" << chromozomeNumber << "\\results.txt";
   string fileName = ss.str();
 
   ofstream file;
@@ -238,23 +272,27 @@ void createResultFile(unsigned int chromozomeNumber,
 }
 
 // the main parameters:
-// 1. chromozome number
-// 2. number of windows in the chromozome
-// 3. number of haplotypes
-// 4. epsilon for the IBD calculations in the LD trees
-// 5. block size - number of windows in a block
-// 6. threshold for the block score
-// 7. the maximum difference between IBD in two populations
+// 1. debug flag - 0/1
+// 2, path to the file
+// 3. chromozome number
+// 4. number of windows in the chromozome
+// 5. number of haplotypes
+// 6. epsilon for the IBD calculations in the LD trees
+// 7. block size - number of windows in a block
+// 8. threshold for the block score
+// 9. the maximum difference between IBD in two population
 int main(int argc, char* argv[])
 {
   // argv[0] is the path and name of the program itself
-  unsigned int chromozomeNumber = atoi(argv[1]);
-  unsigned int numOfWindows = atoi(argv[2]);
-  unsigned int numOfHaplotypes = atoi(argv[3]);
-  double epsilon = atof(argv[4]);
-  unsigned int blockSize = atoi(argv[5]);
-  double threshold = atof(argv[6]);
-  double maxDiff = atof(argv[7]);
+  bool debug = (atoi(argv[1]) != 0);
+  string path = argv[2];
+  unsigned int chromozomeNumber = atoi(argv[3]);
+  unsigned int numOfWindows = atoi(argv[4]);
+  unsigned int numOfHaplotypes = atoi(argv[5]);
+  double epsilon = atof(argv[6]);
+  unsigned int blockSize = atoi(argv[7]);
+  double threshold = atof(argv[8]);
+  double maxDiff = atof(argv[9]);
 
   // the external vector goes over all the windows
   // the interior vectors go over every two persons
@@ -264,8 +302,8 @@ int main(int argc, char* argv[])
   vector< vector< vector<double> > > windowDiff; // the difference between the IBD in population A and the IBD in population B for each two person
   
   // fill the above vectors for each window and for each two persons
-  calculateWindows(chromozomeNumber, numOfWindows, numOfHaplotypes, epsilon,
-    windowScore/*out*/, maxArgIBDWindow/*out*/, windowDiff/*out*/);
+  calculateWindows(path, chromozomeNumber, numOfWindows, numOfHaplotypes, epsilon,
+    windowScore/*out*/, maxArgIBDWindow/*out*/, windowDiff/*out*/, debug);
 
   // the external vector goes over all the blocks
   // the interior vector will be filled with pairs of haplotypes that considered as IBD in this block
@@ -273,13 +311,13 @@ int main(int argc, char* argv[])
   vector< vector < pair < unsigned int, unsigned int> > > IBDHaplotypes;
 
   // fill the above vector according to the windows' calculations
-  calculateBlocks(numOfWindows, numOfHaplotypes, blockSize, threshold, maxDiff, windowScore, maxArgIBDWindow, windowDiff, IBDHaplotypes/*out*/);
+  calculateBlocks(numOfWindows, numOfHaplotypes, blockSize, threshold, maxDiff, windowScore, maxArgIBDWindow, windowDiff, IBDHaplotypes/*out*/, debug);
 
   // create an ouput file with the name "chromX_output" such that X is the chromozome number
   // the file is in the following format:
   // each line indicates pairs of IBD haplotypes in the coordinate block
   // each pair is written as "hap-hap" and there are tabs between the pairs
-  createResultFile(chromozomeNumber, IBDHaplotypes);
+  createResultFile(path, chromozomeNumber, IBDHaplotypes, debug);
 
   return 1;
 }

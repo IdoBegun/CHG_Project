@@ -159,9 +159,18 @@ void LDTree::squeezeTree()
   }
 }
 
-LDTree::LDTree(const vector<string>& haplotypes)
+LDTree::LDTree(const vector<string>& haplotypes, bool debug)
 {
+  if (debug)
+  {
+    cout << "build the tree" << endl;
+  }
   buildTree(haplotypes);
+
+  if (debug)
+  {
+    cout << "squeeze the tree" << endl;
+  }
   squeezeTree();
 }
 
