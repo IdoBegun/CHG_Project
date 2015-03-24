@@ -116,6 +116,37 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
     return res
 
 ################################################################################
+#                                 load_ref_data_windows                       #
+################################################################################
+
+def load_ref_data_windows(hapData, chrom, windowList, outDir):
+    '''
+    Input:
+    hapData - list of haplotypes (strings) of reference data
+    chrom - chromosome number
+    windowList - list of windows to work by
+    outDir - name of directory to store the reference data
+
+    Output:
+    None - creates a file for each window with reference data where each line represents one haplotype.
+    '''
+	
+	nPop = len(hapData)
+	for pop in range(nPop):
+		for iWindow in range(len(windowList)):
+			if DEBUG:
+                    print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
+
+			outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow)
+			outFileHandler = open(outputPath, 'w')
+			[winStart, winEnd] = windowList[iWindow]
+			nHaps = len(hapData[pop])
+			for iHap in range(nHaps):
+				for iSnp in range(winStart, winEnd + 1):
+					outFileHandler.write(hapData[pop][iHap][iSnp])
+				outFileHandler.write('/n')
+			outFileHandler.close()
+################################################################################
 #                                 create_beagle_ref_data                       #
 ################################################################################
 
@@ -136,6 +167,9 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
         os.makedirs(outputDir)
         
     for iWindow in range(len(windowList)):
+		if DEBUG:
+                    print "--> --> create_beagle_ref_data: creating file for window %s..." % (iWindow)
+
         filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
         outputFileHandler = open(filename, 'w')
         [winStart, winEnd] = windowList[iWindow]
@@ -190,6 +224,9 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         os.makedirs(outputDir)
         
     for iWindow in range(len(windowList)):
+		if DEBUG:
+                    print "--> --> create_beagle_sim_data: creating file for window %s..." % (iWindow)
+
         filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
         outputFileHandler = open(filename, 'w')
         [winStart, winEnd] = windowList[iWindow]
@@ -220,12 +257,13 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         
         
         outputFileHandler.close()
-
+		####### TODO #################################3
+		# gzip the file
 ################################################################################
 #                                 load_beagle_phased_data                       #
 ################################################################################
 
-def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir, outFile):
+def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
     '''
     Input:
     chrom - chromosome number
@@ -234,7 +272,6 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir, outFile):
     inDir - name of directory contains the admixture haplotype in VCF format
     inFile - name of file contains the admixture haplotype in VCF format
     outDir - name of directory to store the admixture haplotype
-    outFile - name of file to store the admixture haplotype
 
     Output:
     None - creates a file for each window containing the admixture haplotype data. Each row represents one haplotype. 
@@ -244,6 +281,9 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir, outFile):
     windowFileHandler = open(winPath, 'r')
     numWindows = len(windowList)
     for iWindow in range(numWindows):
+		if DEBUG:
+                    print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
+
 	inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
 	inputFileHandler = open(inPath, 'r')
 	# read data from beagle file
@@ -261,7 +301,10 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir, outFile):
 		    hapData.append(snpData)
 		    
 	    lineCounter = lineCounter + 1
-	outPath = outDir + '/' + str(chrom) + '/' + outFile + str(iWindow + 1)
+	if DEBUG:
+                    print "--> --> load_beagle_phased_data:creating file for window %s..." % (iWindow)
+
+	outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
 	outputFileHandler = open(outPath, 'w')
 	nHaplotypes = len(hapData[0])
 	nSnps = len(hapData)
@@ -391,19 +434,28 @@ for chrom in range(chromsToCompute):
         refHaps = read_translated_chrom_data(filename)
         hapData.append(refHaps)
     # divide to windows
+	if DEBUG:
+		print "--> --> compute_windows: Started for chromosome %s..." % (chrom + 1)
+
     windowList = compute_windows(chromProcessedDirectory, hapData, epsilon, \
                                  numGeneration, chrom + 1, chromProcessedDirectory,windowListFile)
     
+	load_ref_data_windows(hapData, chrom + 1, windowList, \
+				chromProcessedDirectory)
     create_beagle_ref_data(hapData, chrom + 1, windowList, \
                            beaglePhaseDirectory, beagleRefFile)
     filename = translatedInputDataDirecotry + '/' + 'chrom_' + str(chrom + 1)
     genData = read_translated_chrom_data(filename)
     create_beagle_sim_data(genData, chrom + 1, windowList, \
                            beaglePhaseDirectory, beagleGenFile)
-    ##### TODO TODO ######
-    ##### call beagle java code #####
+###############  TODO ##########################
+# call for all windows
+command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + genfile.vcf.gz ref = ref_path out=phasedfile
+# gunzip the result
 
-    load_beagle_phased_data(chrom, windowList, inDir, inFile, phasedDirectory, phasedWindowFile, chromProcessedDirectory, windowListFile)
+#################################################
+
+    load_beagle_phased_data(chrom, windowList, inDir, inFile, phasedDirectory, phasedWindowFile, chromProcessedDirectory)
 
     if chrom == 0:
         numGeneration = compute_generation(chrom + 1, chromProcessedDirectory)
