@@ -7,6 +7,7 @@ from IBD.simulator_data import *
 from IBD.translator import *
 from IBD.common import *
 from IBD.global_params import *
+from IBD.phase import *
 
 ################################################################################
 #                                    MAIN                                      #
@@ -115,8 +116,6 @@ else:
     if not DEBUG:
         print "\nDone."
 
-#personList = read_person_list_file(inputDataDirectory)
-
 print "--> Translating input data..." ,
 if os.path.exists(translatedInputDataDirecotry):
     print "Skipping"
@@ -136,28 +135,94 @@ phase += 1
 print "################################################################################"
 print "Phase %s: Phasing simulated data" % phase
 
-print "--> Not yet implemented"
+numGeneration = initNumGen
+for chrom in range(chromsToCompute):
+    #get hapData
+    chromProcessedDirectory = processedDataDirectory + '/' + str(chrom + 1)
+    if not os.path.exists(chromProcessedDirectory):
+        print "Error: Directory %s does not exist" % (chromProcessedDirectory)
+        sys.exit();
 
-phase += 1
+    hapData = []
+    for name in populationNames:
+        filename = translatedRefDataDirecotry + '/' + name + '_' + \
+                    str(chrom + 1)
+        refHaps = read_translated_chrom_data(filename)
+        hapData.append(refHaps)
+    # divide to windows
+    if DEBUG:
+        print "--> --> compute_windows: Started for chromosome %s..." \
+                "" % (chrom + 1)
 
-print "################################################################################"
-print "Phase %s: Creating windows" % phase
+    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
+                                 numGeneration, chrom + 1, \
+                                 chromProcessedDirectory, windowListFile)
+    
+    load_ref_data_windows(hapData, chrom + 1, windowList, \
+                          chromProcessedDirectory)
+    create_beagle_ref_data(hapData, chrom + 1, windowList, \
+                           beaglePhaseDirectory, beagleRefFile)
+    filename = translatedInputDataDirecotry + '/' + 'chrom_' + str(chrom + 1)
+    genData = read_translated_chrom_data(filename)
+    create_beagle_sim_data(genData, chrom + 1, windowList, \
+                           beaglePhaseDirectory, beagleGenFile)
+###############  TODO ##########################
+# call for all windows
+command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + genfile.vcf.gz ref = ref_path out=phasedfile
+# gunzip the result
 
-print "--> Not yet implemented"
+#################################################
+
+    load_beagle_phased_data(chrom, windowList, inDir, inFile, \
+                            phasedDirectory, phasedWindowFile, \
+                            chromProcessedDirectory)
+
+    if chrom == 0:
+        numGeneration = compute_generation(chrom + 1, chromProcessedDirectory)
+
 
 phase += 1
 
 print "################################################################################"
 print "Phase %s: Computing IBD" % phase
 
-print "--> Not yet implemented"
+workingDir = os.getcwd() + "/" + beaglePhaseDirectory + "/"
+personList = read_person_list_file(inputDataDirectory)
+numHaps = len(personList) * 2  
+
+for chrom in range(chromsToCompute):
+    print "--> Computing IBD for chromosome %s..." % (chrom + 1)
+    # Need a function to read the data saved instead of computing it again!
+    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
+                                 numGeneration, chrom + 1, \
+                                 chromProcessedDirectory, windowListFile)
+    
+    numWindows = len(windowList)
+    
+    compute_ibd(ibdExe, workingDir, chrom, numWindows, numHaps, \
+                ibdEpsilon, blockSize, ibdThreshold, maxDiff)
 
 phase += 1
 
 print "################################################################################"
 print "Phase %s: Exporting results" % phase
 
-print "--> Not yet implemented"
+resultsFileHandle = open(fileName, 'w')
+header = "name1\tname2\tchr_start\tstart\tchr_end\tend\n"
+resultsFileHandle.write(header)
+
+for chrom in range(chromsToCompute):
+    # Need a function to read the data saved instead of computing it again!
+    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
+                                 numGeneration, chrom + 1, \
+                                 chromProcessedDirectory, windowListFile)
+    
+    results = read_ibd_results(beaglePhaseDirectory, chrom + 1, personList, \
+                               windowList, blockSize)
+    export_restuls(resultsFileHandle, chrom, personList, results)
+    
+
+resultsFileHandle.close()
 
 phase += 1
 

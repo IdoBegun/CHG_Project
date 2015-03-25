@@ -1,77 +1,8 @@
 
-import sys
-import re
-import string
-import os
-import math
-
+import sys, re, string, os, math
 
 ################################################################################
-#                               Global Variable                                #
-################################################################################
-
-# initial number of generations
-initNumGen = 50
-
-# Recombination factor
-recombFact = 10
-
-# max number of SNPs allowed in a window
-maxWindowSNPs = 20
-
-# directory used for beagle phase
-beaglePhaseDirectory = 'beagle_phase'
-
-# file prefix used for beagle phase input files
-beagleRefFile = 'beagle_reference'
-beagleSimFile = 'beagle_simulator'
-beaglePhasedFile = 'beagle_phased_simulator'
-
-# directory of phased haplotypes by chromosome and window
-phasedDirectory = 'phasedSimulatorData'
-phasedWindowFile = 'phased_window'
-
-# file prefix of window list
-windowListFile = 'windowList'
-
-# Total number of chromosomes
-numChrom = 22
-
-# Filename of a person list from the input data
-personListFilename = "personList"
-
-# Reference data files
-ceuFile = "ceu.haps.long"
-yriFile = "yri.haps.long"
-populationNames = ["ceu"]
-
-# Input data files
-snpInfoFile = "snpinfo1"
-inputDataFile = "haplotypes1"
-
-# Directories
-inputDataDirectory = "input_data"
-refDataDirectory = "ref_data"
-snpDataDirectory = "snp_data"
-translationDirectory = "translation"
-translatedRefDataDirecotry = "ref_data_trans"
-translatedInputDataDirecotry = "input_data_trans"
-processedDataDirectory = "processed_data"
-
-# Parameters
-epsilon = 0.00001
-
-phase = 1
-
-# Debug
-DEBUG = True
-chromsToCompute = 1
-
-
-
-
-################################################################################
-#                                 compute_windows                              #
+#                               compute_windows                                #
 ################################################################################
 
 def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
@@ -84,7 +15,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
     chrom - number of chromosome
     outDir - name of directory to store the new windows
     outFile - name of file to store the new windows
-	
+    
     Output:
     A list of new windows considering: LD windows, number of SNPs in window and window size.
     '''
@@ -109,14 +40,14 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
                 posEnd = posEnd + 1
 
             res.append([posStart, posEnd])
-	    outputFileHandler.write(str(posStart) + ' ' + str(posEnd) + '\n')
+        outputFileHandler.write(str(posStart) + ' ' + str(posEnd) + '\n')
             posStart = posEnd  + 1
             posEnd = posStart
     outputFileHandler.close()    
     return res
 
 ################################################################################
-#                                 load_ref_data_windows                       #
+#                            load_ref_data_windows                             #
 ################################################################################
 
 def load_ref_data_windows(hapData, chrom, windowList, outDir):
@@ -130,24 +61,24 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
     Output:
     None - creates a file for each window with reference data where each line represents one haplotype.
     '''
-	
-	nPop = len(hapData)
-	for pop in range(nPop):
-		for iWindow in range(len(windowList)):
-			if DEBUG:
+    
+    nPop = len(hapData)
+    for pop in range(nPop):
+        for iWindow in range(len(windowList)):
+            if DEBUG:
                     print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
 
-			outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow)
-			outFileHandler = open(outputPath, 'w')
-			[winStart, winEnd] = windowList[iWindow]
-			nHaps = len(hapData[pop])
-			for iHap in range(nHaps):
-				for iSnp in range(winStart, winEnd + 1):
-					outFileHandler.write(hapData[pop][iHap][iSnp])
-				outFileHandler.write('/n')
-			outFileHandler.close()
+            outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow)
+            outFileHandler = open(outputPath, 'w')
+            [winStart, winEnd] = windowList[iWindow]
+            nHaps = len(hapData[pop])
+            for iHap in range(nHaps):
+                for iSnp in range(winStart, winEnd + 1):
+                    outFileHandler.write(hapData[pop][iHap][iSnp])
+                outFileHandler.write('/n')
+            outFileHandler.close()
 ################################################################################
-#                                 create_beagle_ref_data                       #
+#                            create_beagle_ref_data                            #
 ################################################################################
 
 def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
@@ -158,7 +89,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
     windowList - list of windows to work by
     outDir - name of directory to store the reference data
     outFile - name of file to store the reference data
-	
+    
     Output:
     None - creates a file for each window with reference data.  Data is stored in VCF format for BEAGLE phasing algorithm.
     ''' 
@@ -167,7 +98,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
         os.makedirs(outputDir)
         
     for iWindow in range(len(windowList)):
-		if DEBUG:
+        if DEBUG:
                     print "--> --> create_beagle_ref_data: creating file for window %s..." % (iWindow)
 
         filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
@@ -204,7 +135,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
 
 
 ################################################################################
-#                                 create_beagle_sim_data                       #
+#                          create_beagle_sim_data                              #
 ################################################################################
 
 def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
@@ -224,7 +155,7 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         os.makedirs(outputDir)
         
     for iWindow in range(len(windowList)):
-		if DEBUG:
+        if DEBUG:
                     print "--> --> create_beagle_sim_data: creating file for window %s..." % (iWindow)
 
         filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
@@ -257,10 +188,10 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         
         
         outputFileHandler.close()
-		####### TODO #################################3
-		# gzip the file
+        ####### TODO #################################3
+        # gzip the file
 ################################################################################
-#                                 load_beagle_phased_data                       #
+#                           load_beagle_phased_data                            #
 ################################################################################
 
 def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
@@ -281,40 +212,40 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
     windowFileHandler = open(winPath, 'r')
     numWindows = len(windowList)
     for iWindow in range(numWindows):
-		if DEBUG:
+        if DEBUG:
                     print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
 
-	inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
-	inputFileHandler = open(inPath, 'r')
-	# read data from beagle file
-	hapData = []
-	lineCounter = 0
-	for line in inputFileHandler:
-	    if lineCounter >= 10:
-		splittedLine = line.split()
-		snpData = []
-		nPerson = len(splittedLine) - 9
-		for iPerson in range(nPerson):
+    inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
+    inputFileHandler = open(inPath, 'r')
+    # read data from beagle file
+    hapData = []
+    lineCounter = 0
+    for line in inputFileHandler:
+        if lineCounter >= 10:
+        splittedLine = line.split()
+        snpData = []
+        nPerson = len(splittedLine) - 9
+        for iPerson in range(nPerson):
                     personData = splittedLine[9 + iPerson]
-		    snpData.append(personData[0])
-        	    snpData.append(personData[2])
-		    hapData.append(snpData)
-		    
-	    lineCounter = lineCounter + 1
-	if DEBUG:
+            snpData.append(personData[0])
+                snpData.append(personData[2])
+            hapData.append(snpData)
+            
+        lineCounter = lineCounter + 1
+    if DEBUG:
                     print "--> --> load_beagle_phased_data:creating file for window %s..." % (iWindow)
 
-	outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
-	outputFileHandler = open(outPath, 'w')
-	nHaplotypes = len(hapData[0])
-	nSnps = len(hapData)
-	for iHap in range(nHaplotypes):
-	    for iSNP in range(nSnps):
-		outputFileHandler.write(hapData[iSNP][iHap])
-		outputFileHandler.write('\n')
+    outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
+    outputFileHandler = open(outPath, 'w')
+    nHaplotypes = len(hapData[0])
+    nSnps = len(hapData)
+    for iHap in range(nHaplotypes):
+        for iSNP in range(nSnps):
+        outputFileHandler.write(hapData[iSNP][iHap])
+        outputFileHandler.write('\n')
 
 ################################################################################
-#                                 compute_generation                                         #
+#                           compute_generation                                 #
 ################################################################################
 
 def compute_generation(chrom, winDir):
@@ -331,24 +262,24 @@ def compute_generation(chrom, winDir):
     LDSnps = []
     inputFileHandler = open(filename, 'r')
     for line in inputFileHandler:
-	splitLine = line.split()
-	LDSnps.append(splitLine[0])
-	
+    splitLine = line.split()
+    LDSnps.append(splitLine[0])
+    
     hapData = get_hap_data(LDSnps, chrom, chromProcessedDirectory, windowListFile, phasedDirectory, phasedWindowFile)
 
-    alleleFreq = compute_allele_frequencies(hapData)	
+    alleleFreq = compute_allele_frequencies(hapData)    
     genVec = []
     for iSnp in range(len(LDSnps)):
-	for jSnp in range(iSnp + 1, len(LDSnps)):
-	    corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
-	    snpCount = count_snps_in_chrom(snpDataDirectory)
-	    offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
-	    d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1]
-	    tmp = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp]) / ((alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp]))
-	    n = math.log(tmp) / (-d)			
-	    genVec.append(n)
+    for jSnp in range(iSnp + 1, len(LDSnps)):
+        corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
+        snpCount = count_snps_in_chrom(snpDataDirectory)
+        offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
+        d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1]
+        tmp = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp]) / ((alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp]))
+        n = math.log(tmp) / (-d)            
+        genVec.append(n)
     return sum(x for x in genVec) / len(genVec)
-			
+            
 
 ################################################################################
 #                                 get_hap_data                                         #
@@ -370,18 +301,18 @@ def get_hap_data(snpList, chrom, winDir, winFile, subWinDir, subWinFile):
 
     hapData = []
     for name in populationNames:
-	filename = translatedRefDataDirecotry + '/' + name + '_' + str(chrom)
-	fileHandle = open(filename, 'r')
-    	res = []
-    	for line in fileHandle:
+    filename = translatedRefDataDirecotry + '/' + name + '_' + str(chrom)
+    fileHandle = open(filename, 'r')
+        res = []
+        for line in fileHandle:
             splitLine = line.strip()
-	    hapString = ''
-	    for iSnp in snpList:
-		hapString = hapString + str(splitLine[0][iSnp - 1])
-	    res.append(hapString)
+        hapString = ''
+        for iSnp in snpList:
+        hapString = hapString + str(splitLine[0][iSnp - 1])
+        res.append(hapString)
     
-   	fileHandle.close()
-	hapData.append(res)
+       fileHandle.close()
+    hapData.append(res)
 
     #get data from simulator
     winPath = winDir + '/' + str(chrom) + '/' + winFile
@@ -389,73 +320,25 @@ def get_hap_data(snpList, chrom, winDir, winFile, subWinDir, subWinFile):
     nLine = 1
     relSubWins = []
     for line in fileHandler:
-	splitLine = line.strip()
-	if splitLine[0] in snpList:
-	    relSubWins.append(nLine)
-	nLine = nLine + 1
-	
+    splitLine = line.strip()
+    if splitLine[0] in snpList:
+        relSubWins.append(nLine)
+    nLine = nLine + 1
+    
     res = []
     for subWin in relSubWins:
-	filename = subWinDir + '/' + str(chrom) + '/' + subWinFile + str(subWin)
-	fileHandler = open(filename, 'r')
+    filename = subWinDir + '/' + str(chrom) + '/' + subWinFile + str(subWin)
+    fileHandler = open(filename, 'r')
         if len(res) == 0:
-	    for line in fileHandler:
-		splited = line.split()[0]
-		res.append(splited[0])
-	    else:
-		nLine = 0
+        for line in fileHandler:
+        splited = line.split()[0]
+        res.append(splited[0])
+        else:
+        nLine = 0
                 for line in fileHandler:
-		    splited = line.split()[0]
-		    res[nLine] = res[nLine] + splited[0]
-		    nLine = nLine + 1
-	fileHandler.close()
+            splited = line.split()[0]
+            res[nLine] = res[nLine] + splited[0]
+            nLine = nLine + 1
+    fileHandler.close()
     hapData.append(res)
     return hapData
-
-
-
-
-################################################################################
-#                                 main                                         #
-################################################################################
-
-numGeneration = initNumGen
-for chrom in range(chromsToCompute):
-    #get hapData
-    chromProcessedDirectory = processedDataDirectory + '/' + str(chrom + 1)
-    if not os.path.exists(chromProcessedDirectory):
-        print "Error: Directory %s does not exist" % (chromProcessedDirectory)
-        sys.exit();
-
-    hapData = []
-    for name in populationNames:
-        filename = translatedRefDataDirecotry + '/' + name + '_' + \
-                    str(chrom + 1)
-        refHaps = read_translated_chrom_data(filename)
-        hapData.append(refHaps)
-    # divide to windows
-	if DEBUG:
-		print "--> --> compute_windows: Started for chromosome %s..." % (chrom + 1)
-
-    windowList = compute_windows(chromProcessedDirectory, hapData, epsilon, \
-                                 numGeneration, chrom + 1, chromProcessedDirectory,windowListFile)
-    
-	load_ref_data_windows(hapData, chrom + 1, windowList, \
-				chromProcessedDirectory)
-    create_beagle_ref_data(hapData, chrom + 1, windowList, \
-                           beaglePhaseDirectory, beagleRefFile)
-    filename = translatedInputDataDirecotry + '/' + 'chrom_' + str(chrom + 1)
-    genData = read_translated_chrom_data(filename)
-    create_beagle_sim_data(genData, chrom + 1, windowList, \
-                           beaglePhaseDirectory, beagleGenFile)
-###############  TODO ##########################
-# call for all windows
-command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + genfile.vcf.gz ref = ref_path out=phasedfile
-# gunzip the result
-
-#################################################
-
-    load_beagle_phased_data(chrom, windowList, inDir, inFile, phasedDirectory, phasedWindowFile, chromProcessedDirectory)
-
-    if chrom == 0:
-        numGeneration = compute_generation(chrom + 1, chromProcessedDirectory)
