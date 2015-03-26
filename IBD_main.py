@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os
+import os, subprocess
 
 from IBD.reference_data import *
 from IBD.simulator_data import *
@@ -173,8 +173,12 @@ for chrom in range(chromsToCompute):
         refPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleRefFile + str(iWindow) + '.vcf'
         outputPath = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/win' + str(iWindow)
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + ' ref=' + refPath + ' out=' + outputPath
+        
+        output = subprocess.check_output(command, shell=True)
+        if output:
+            print output
     ###############  TODO ##########################
-    # run command and gunzip the result
+    #  gunzip the result
 
 #################################################
 

@@ -1,5 +1,5 @@
 
-import sys, re, string, os, math
+import sys, re, string, os, math, subprocess
 
 ################################################################################
 #                               compute_windows                                #
@@ -190,8 +190,10 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         outputFileHandler.close()
         
         command = 'gzip ' + filename
-        ####### TODO #################################3
-        # run this command
+        
+        output = subprocess.check_output(command, shell=True)
+        if output:
+            print output
         
         
 ################################################################################
