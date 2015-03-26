@@ -177,6 +177,12 @@ for chrom in range(chromsToCompute):
         output = subprocess.check_output(command, shell=True)
         if output:
             print output
+        
+        command = "gunzip " + outputPath
+        
+        output = subprocess.check_output(command, shell=True)
+        if output:
+            print output
     ###############  TODO ##########################
     #  gunzip the result
 
