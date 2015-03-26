@@ -5,6 +5,7 @@
 
 void LDTree::insertNodeToArray(LDNode* node, int depth)
 {
+  // IdoB: Index might be out of bound
   if (this->depthArray[depth]!=NULL)
   {
     LDNode* currentNode = this->depthArray[depth];
@@ -301,6 +302,7 @@ double LDTree::getIBDProbability(const string& haplotype1, const string& haploty
   double child1Prob, child2Prob;
   for (unsigned int i = 0; i < haplotype1.size(); i++)
   {
+	// IdoB: Use char instead of const char reference
     const char& SNP1 = haplotype1[i];
     const char& SNP2 = haplotype2[i];
     child1Num = getChildInfo(node1, SNP1, &child1);

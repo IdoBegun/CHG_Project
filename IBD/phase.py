@@ -40,6 +40,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
                 posEnd = posEnd + 1
 
             res.append([posStart, posEnd])
+        # IdoB: Indentation?
         outputFileHandler.write(str(posStart) + ' ' + str(posEnd) + '\n')
             posStart = posEnd  + 1
             posEnd = posStart
@@ -107,6 +108,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
 
         
         outputFileHandler.write('##fileformat=VCFv4.1\n')
+        # IdoB: That's not how breaking line works when using strings
         outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,\
                                 Description="Genotype">\n')
         outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
@@ -228,10 +230,12 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
     lineCounter = 0
     for line in inputFileHandler:
         if lineCounter >= 10:
+        # IdoB: Indentation?
         splittedLine = line.split()
         snpData = []
         nPerson = len(splittedLine) - 9
         for iPerson in range(nPerson):
+            # IdoB: Indentation?
                     personData = splittedLine[9 + iPerson]
             snpData.append(personData[0])
                 snpData.append(personData[2])
