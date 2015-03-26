@@ -101,7 +101,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
         if DEBUG:
                     print "--> --> create_beagle_ref_data: creating file for window %s..." % (iWindow)
 
-        filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
+        filename = outputDir + '/' + outFile + str(iWindow) + '.vcf'
         outputFileHandler = open(filename, 'w')
         [winStart, winEnd] = windowList[iWindow]
 
@@ -158,7 +158,7 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         if DEBUG:
                     print "--> --> create_beagle_sim_data: creating file for window %s..." % (iWindow)
 
-        filename = outputDir + '/' + outFile + str(iWindow + 1) + '.vcf'
+        filename = outputDir + '/' + outFile + str(iWindow) + '.vcf'
         outputFileHandler = open(filename, 'w')
         [winStart, winEnd] = windowList[iWindow]
 
@@ -188,8 +188,12 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         
         
         outputFileHandler.close()
+        
+        command = 'gzip ' + filename
         ####### TODO #################################3
-        # gzip the file
+        # run this command
+        
+        
 ################################################################################
 #                           load_beagle_phased_data                            #
 ################################################################################
