@@ -47,6 +47,31 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
     outputFileHandler.close()    
     return res
 
+
+################################################################################
+#                               read_windows                                #
+################################################################################
+
+def read_windows(inDir, inFile):
+    '''
+	Input:
+	inDir - name of directory with windows list
+	inFile - name of file with windows list
+
+	Output:
+	winList - a list of windows with limited amount of SNPs 	and length. 
+	'''
+	path = inDir + '/' + inFile
+	fileHandler = open(path, 'r')
+	winList = []
+	for line in fileHandler:
+		split = line.split()
+		winStart = split[0]
+		winEnd = split[1]
+		winList.append([winStart, winEnd])
+
+	return winList
+
 ################################################################################
 #                            load_ref_data_windows                             #
 ################################################################################
