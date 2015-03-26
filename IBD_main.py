@@ -159,17 +159,22 @@ for chrom in range(chromsToCompute):
                                  chromProcessedDirectory, windowListFile)
     
     load_ref_data_windows(hapData, chrom + 1, windowList, \
-                          chromProcessedDirectory)
+                          phasedDirectory)
     create_beagle_ref_data(hapData, chrom + 1, windowList, \
                            beaglePhaseDirectory, beagleRefFile)
     filename = translatedInputDataDirecotry + '/' + 'chrom_' + str(chrom + 1)
     genData = read_translated_chrom_data(filename)
     create_beagle_sim_data(genData, chrom + 1, windowList, \
                            beaglePhaseDirectory, beagleGenFile)
-###############  TODO ##########################
-# call for all windows
-command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + genfile.vcf.gz ref = ref_path out=phasedfile
-# gunzip the result
+
+    nWindows = len(windowList)
+    for iWindow in range(nWindows):
+        winPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleGenFile + str(iWindow) + '.vcf.gz'
+        refPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleRefFile + str(iWindow) + '.vcf'
+        outputPath = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/win' + str(iWindow)
+        command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + ' ref=' + refPath + ' out=' + outputPath
+    ###############  TODO ##########################
+    # run command and gunzip the result
 
 #################################################
 
