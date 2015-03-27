@@ -54,7 +54,9 @@ def read_translated_chrom_data(filename):
 def compute_allele_frequencies(hapData):
     '''
     Input:
-    hapData - A list of haplotypa data (strings)
+    hapData - A 2d list of haplotype data (strings)
+                1st index - population number
+                2nd index - haplotype number
     
     Output:
     A list containing allele frequencies. Each entry represents the frequency
@@ -62,16 +64,14 @@ def compute_allele_frequencies(hapData):
     '''
     
     numPop = len(hapData)
-    s = len(hapData[0][0])
+    hapLength = len(hapData[0][0])
     
     res = [[] for x in range(numPop)]
-    for i in range(s):
+    for i in range(hapLength):
         for j in range(numPop):
-            #for hap in hapData:
-            #    print i, hap[i]
-            ones = [int(hap[i]) for hap in hapData[j]]
+            snpVals = [int(hap[i]) for hap in hapData[j]]
         
-            res[j].append(sum(ones))
+            res[j].append(sum(snpVals))
     
     for i in range(numPop):
         res[i] = [float(x) / len(hapData[i]) for x in res[i]]

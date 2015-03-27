@@ -31,9 +31,10 @@ def create_translator(inputDir, outputDir, snpCount, populationNames, chrom):
         inputFilename = inputDir + '/' + name + '_' + str(chrom)
         fileHandle = open(inputFilename,'r')
         
+        # TODO: Do we have a more efficient way of finding unique entries?
         for line in fileHandle:
             splitLine = line.split()
-            for i in range(len(splitLine)):
+            for i in range(len(splitLine)): #len(splitLine) = numOfSNPs
                 if splitLine[i] not in hap[i]:
                     hap[i].append(splitLine[i])
         
@@ -64,7 +65,11 @@ def load_trans_dictionary_hap(transDir, snpCount, chrom):
     
     Output:
     A list of dictionaries. Each entry represents a single SNP in the relevant
-    chromosome. The dictionary contains data for each haplotype value.
+    chromosome. The dictionary contains data for each SNP value.
+    
+    Note:
+    Output should be in the form of:
+    [{'A':0, 'C':1}, {'G':0, 'T':1}]
     '''
     
     inputFilename = transDir + '/chrom_' + str(chrom)
@@ -138,7 +143,7 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
     inputFileHandle = open(inputFilename, 'r')
     outputFileHandle = open(outputFilename, 'w')
     
-    length = len(hapDict)
+    length = len(hapDict) # Number of SNPs in the chromosome
     
     for line in inputFileHandle:
         splitLine = line.split()

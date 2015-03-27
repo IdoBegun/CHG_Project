@@ -8,10 +8,14 @@ from IBD.translator import *
 from IBD.common import *
 from IBD.global_params import *
 from IBD.phase import *
+from IBD.results import *
 
 ################################################################################
 #                                    MAIN                                      #
 ################################################################################
+
+#TODO: Read input parameters according to the project document
+# TODO - change some functions to compute/load - call compute if needed from load instead of compute if needed and then load
 
 if chromsToCompute == 0:
     chromsToCompute = numChrom
@@ -101,7 +105,7 @@ for chrom in range(chromsToCompute):
             hapData.append(refHaps)
             
         ld_windows = load_LD_windows(chromProcessedDirectory, hapData, \
-                                     indEpsilon)
+                                     indEpsilon, minInd)
     
 phase += 1   
 
@@ -155,7 +159,7 @@ for chrom in range(chromsToCompute):
                 "" % (chrom + 1)
 
     windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, \
+                                 numGeneration, chrom + 1, minInd, snpCount, \
                                  chromProcessedDirectory, windowListFile)
     
     load_ref_data_windows(hapData, chrom + 1, windowList, \
@@ -183,17 +187,14 @@ for chrom in range(chromsToCompute):
         output = subprocess.check_output(command, shell=True)
         if output:
             print output
-    ###############  TODO ##########################
-    #  gunzip the result
-
-#################################################
 
     load_beagle_phased_data(chrom, windowList, inDir, inFile, \
                             phasedDirectory, phasedWindowFile, \
                             chromProcessedDirectory)
 
     if chrom == 0:
-        numGeneration = compute_generation(chrom + 1, chromProcessedDirectory)
+        # update the number of generations according to the first chromosome
+        numGeneration = compute_generation(chrom + 1, populationNames, snpCount, chromProcessedDirectory, translatedRefDataDirecotry)
 
 
 phase += 1
@@ -207,9 +208,9 @@ numHaps = len(personList) * 2
 
 for chrom in range(chromsToCompute):
     print "--> Computing IBD for chromosome %s..." % (chrom + 1)
-    # Need a function to read the data saved instead of computing it again!
+    # TODO: Need a function to read the data saved instead of computing it again! - do it in each compute_windows call
     windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, \
+                                 numGeneration, chrom + 1, snpCount, \
                                  chromProcessedDirectory, windowListFile)
     
     numWindows = len(windowList)
@@ -222,18 +223,21 @@ phase += 1
 print "################################################################################"
 print "Phase %s: Exporting results" % phase
 
+# TODO - update the fileName variable
 resultsFileHandle = open(fileName, 'w')
 header = "name1\tname2\tchr_start\tstart\tchr_end\tend\n"
 resultsFileHandle.write(header)
 
 for chrom in range(chromsToCompute):
-    # Need a function to read the data saved instead of computing it again!
+    # TODO: Need a function to read the data saved instead of computing it again!
     windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, \
+                                 numGeneration, chrom + 1, minInd, \
                                  chromProcessedDirectory, windowListFile)
     
+    # TODO: match number of parameters
     results = read_ibd_results(beaglePhaseDirectory, chrom + 1, personList, \
                                windowList, blockSize)
+    # TODO: less ugly
     export_restuls(resultsFileHandle, chrom, personList, results)
     
 

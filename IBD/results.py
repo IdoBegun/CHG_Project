@@ -16,7 +16,7 @@ def read_ibd_results(inputDir, chrom):
     A list containing all person IDs in the personList file
     '''
     
-    fileName = inputDir + "/chrom_" + str(chrom)
+    fileName = inputDir + "/chrom" + str(chrom)
     fileHandle = open(fileName, 'r')
     res = []
     
@@ -72,6 +72,7 @@ def compute_ibd(executableName, workingDir, chrom, numWindows, numHaps, \
 #                              process_results                                 #
 ################################################################################
 
+#TODO: unused?
 def process_results(resList, chrom, personList, windowList, windowPerBlock):
     '''
     Input:

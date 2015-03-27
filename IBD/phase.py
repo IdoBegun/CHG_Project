@@ -1,11 +1,14 @@
 
 import sys, re, string, os, math, subprocess
+from IBD.global_params import *
+from IBD.reference_data import *
+from IBD.common import *
 
 ################################################################################
 #                               compute_windows                                #
 ################################################################################
 
-def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
+def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, outDir, outFile):
     '''
     Input:
     inDir - name of directory with LD windows list
@@ -13,6 +16,8 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
     epsilon - maximum threshold for LD score
     numGen - number of generations of the admixture society
     chrom - number of chromosome
+    minInd - Minimum number of SNPs in each window
+    snpCount - List containing number of SNPs in each chromosome
     outDir - name of directory to store the new windows
     outFile - name of file to store the new windows
     
@@ -22,28 +27,31 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, outDir, outFile):
     expectedRecomb = pow(10, 8)/numGen
     maxWindowLen = expectedRecomb/recombFact
     res = []
-    winLD = load_LD_windows(inDir, hapData, epsilon)
-    snpCount = count_snps_in_chrom(snpDataDirectory) 
+    winLD = load_LD_windows(inDir, hapData, epsilon, minInd)
+    offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount) 
+
+    for [winLDStart, winLDEnd] in winLD:
+        posStart = winLDStart
+        posEnd = posStart + 1
+        while (posEnd <= winLDEnd):
+            while ((posEnd - posStart) < maxWindowSNPs ) and \
+                  (offsets[posEnd] - offsets[posStart] <= maxWindowLen) and \
+                  (posEnd <= winLDEnd):
+                posEnd += 1
+            res.append([posStart, posEnd - 1])
+            posStart = posEnd
+            posEnd = posStart + 1
+        res[-1][1] = winLDEnd
+        if (res[-1][1] - res[-1][0] < minInd):
+            res[-2][1] = winLDEnd
+            res = res[:-1]
+        
     if not os.path.exists(outDir + '/' + str(chrom)):
         os.makedirs(outDir + '/' + str(chrom))
-            
     outputPath = outDir + '/' + str(chrom) + '/' + outFile
     outputFileHandler = open(outputPath, 'w')
-    for [winLDStart, winLDEnd] in winLD:
-        offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
-        posStart = winLDStart
-        posEnd = posStart
-        while (posEnd <= winLDEnd):
-            while (posEnd - posStart < maxWindowSNPs ) & \
-                  (offsets[posEnd] - offsets[posStart-1] <= maxWindowLen) & \
-                  (posEnd != winLDEnd):
-                posEnd = posEnd + 1
-
-            res.append([posStart, posEnd])
-        # IdoB: Indentation?
-        outputFileHandler.write(str(posStart) + ' ' + str(posEnd) + '\n')
-            posStart = posEnd  + 1
-            posEnd = posStart
+    for [winStart, winEnd] in res:
+        outputFileHandler.write(str(winStart) + ' ' + str(winEnd) + '\n')
     outputFileHandler.close()    
     return res
 
@@ -61,14 +69,14 @@ def read_windows(inDir, inFile):
 	Output:
 	winList - a list of windows with limited amount of SNPs 	and length. 
 	'''
-	path = inDir + '/' + inFile
-	fileHandler = open(path, 'r')
-	winList = []
-	for line in fileHandler:
-		split = line.split()
-		winStart = split[0]
-		winEnd = split[1]
-		winList.append([winStart, winEnd])
+    path = inDir + '/' + inFile
+    fileHandler = open(path, 'r')
+    winList = []
+    for line in fileHandler:
+        split = line.split()
+        winStart = split[0]
+        winEnd = split[1]
+        winList.append([winStart, winEnd])
 
 	return winList
 
@@ -133,9 +141,8 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
 
         
         outputFileHandler.write('##fileformat=VCFv4.1\n')
-        # IdoB: That's not how breaking line works when using strings
-        outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,\
-                                Description="Genotype">\n')
+        outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,' \
+                                'Description="Genotype">\n')
         outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
 
         nPop = len(hapData[0]) + len(hapData[1])
@@ -241,53 +248,50 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
     None - creates a file for each window containing the admixture haplotype data. Each row represents one haplotype. 
     '''
     # count windows
-    winPath = winDir + '/' + str(chrom) + '/' + winFile
-    windowFileHandler = open(winPath, 'r')
     numWindows = len(windowList)
     for iWindow in range(numWindows):
         if DEBUG:
-                    print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
+            print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
 
-    inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
-    inputFileHandler = open(inPath, 'r')
-    # read data from beagle file
-    hapData = []
-    lineCounter = 0
-    for line in inputFileHandler:
-        if lineCounter >= 10:
-        # IdoB: Indentation?
-        splittedLine = line.split()
-        snpData = []
-        nPerson = len(splittedLine) - 9
-        for iPerson in range(nPerson):
-            # IdoB: Indentation?
+        inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
+        inputFileHandler = open(inPath, 'r')
+        # read data from beagle file
+        hapData = []
+        lineCounter = 0
+        for line in inputFileHandler:
+            if lineCounter >= 10:
+                splittedLine = line.split()
+                snpData = []
+                nPerson = len(splittedLine) - 9
+                for iPerson in range(nPerson):
                     personData = splittedLine[9 + iPerson]
-            snpData.append(personData[0])
-                snpData.append(personData[2])
-            hapData.append(snpData)
-            
-        lineCounter = lineCounter + 1
-    if DEBUG:
-                    print "--> --> load_beagle_phased_data:creating file for window %s..." % (iWindow)
-
-    outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
-    outputFileHandler = open(outPath, 'w')
-    nHaplotypes = len(hapData[0])
-    nSnps = len(hapData)
-    for iHap in range(nHaplotypes):
-        for iSNP in range(nSnps):
-        outputFileHandler.write(hapData[iSNP][iHap])
-        outputFileHandler.write('\n')
+                    snpData.append(personData[0])
+                    snpData.append(personData[2])
+                hapData.append(snpData)
+                
+            lineCounter = lineCounter + 1
+   
+        outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
+        outputFileHandler = open(outPath, 'w')
+        nHaplotypes = len(hapData[0])
+        nSnps = len(hapData)
+        for iHap in range(nHaplotypes):
+            for iSNP in range(nSnps):
+                outputFileHandler.write(hapData[iSNP][iHap])
+            outputFileHandler.write('\n')
 
 ################################################################################
 #                           compute_generation                                 #
 ################################################################################
 
-def compute_generation(chrom, winDir):
+def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDataDirecotry):
     '''
     Input:
     chrom - chromosome number
+    populationNames - List of population names
+    snpCount - List of number of SNPs in each chromosome
     winDir - name of directory contains a list of LD windows
+    translatedRefDataDirecotry - Name of the directory containing the translated reference data
 
     Output:
     Number of generations passed since admixture.
@@ -297,22 +301,22 @@ def compute_generation(chrom, winDir):
     LDSnps = []
     inputFileHandler = open(filename, 'r')
     for line in inputFileHandler:
-    splitLine = line.split()
-    LDSnps.append(splitLine[0])
+        splitLine = line.split()
+        LDSnps.append(splitLine[0])
     
-    hapData = get_hap_data(LDSnps, chrom, chromProcessedDirectory, windowListFile, phasedDirectory, phasedWindowFile)
+    hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
+    offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
 
     alleleFreq = compute_allele_frequencies(hapData)    
     genVec = []
     for iSnp in range(len(LDSnps)):
-    for jSnp in range(iSnp + 1, len(LDSnps)):
-        corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
-        snpCount = count_snps_in_chrom(snpDataDirectory)
-        offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
-        d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1]
-        tmp = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp]) / ((alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp]))
-        n = math.log(tmp) / (-d)            
-        genVec.append(n)
+        for jSnp in range(iSnp + 1, len(LDSnps)):
+            corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
+            d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1]
+            tmp = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp]) / ((alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp]))
+            n = math.log(tmp) / (-d)            
+            genVec.append(n)
+            
     return sum(x for x in genVec) / len(genVec)
             
 
@@ -320,60 +324,64 @@ def compute_generation(chrom, winDir):
 #                                 get_hap_data                                         #
 ################################################################################
 
-def get_hap_data(snpList, chrom, winDir, winFile, subWinDir, subWinFile):
+def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, subWinFile, translatedRefDataDirecotry):
     '''
     Input:
     snpList - list of relevant SNPs
     chrom - chromosome number
+    populationNames - List of population names
     winDir - name of directory contains a list of windows dividing the chromosome
     winFile - name of file contains a list of windows dividing the chromosome
     subWinDir - name of directory contains admixture population haplotype data stored by windows
     subWinFile - name of file contains admixture population haplotype data stored by windows
+    translatedRefDataDirecotry - Name of the directory containing the translated reference data
 
     Output:
     a list with haplotype data in the relevant SNPs in all populations.
     '''
 
     hapData = []
+    # get the relevant (independent) SNPsfrom the reference data in each haplotype 
     for name in populationNames:
-    filename = translatedRefDataDirecotry + '/' + name + '_' + str(chrom)
-    fileHandle = open(filename, 'r')
+        filename = translatedRefDataDirecotry + '/' + name + '_' + str(chrom)
+        fileHandle = open(filename, 'r')
         res = []
         for line in fileHandle:
-            splitLine = line.strip()
-        hapString = ''
-        for iSnp in snpList:
-        hapString = hapString + str(splitLine[0][iSnp - 1])
-        res.append(hapString)
+            strippedLine = line.strip()
+            hapString = ''
+            for iSnp in snpList:
+                hapString = hapString + strippedLine[iSnp]
+            res.append(hapString)
     
-       fileHandle.close()
-    hapData.append(res)
+        fileHandle.close()
+        hapData.append(res)
 
-    #get data from simulator
+    # get the relevant (independent) SNPsfrom the simulator data in each haplotype
+    
+    # get list of relevant sub windows (sub windows that contain SNPs from snpList)
     winPath = winDir + '/' + str(chrom) + '/' + winFile
     fileHandler = open(winPath, 'r')
-    nLine = 1
+    nSubWin = 0
     relSubWins = []
     for line in fileHandler:
-    splitLine = line.strip()
-    if splitLine[0] in snpList:
-        relSubWins.append(nLine)
-    nLine = nLine + 1
+        splitLine = line.split()
+        if splitLine[0] in snpList:
+            relSubWins.append(nSubWin)
+        nSubWin += 1
+    fileHandler.close()
     
     res = []
     for subWin in relSubWins:
-    filename = subWinDir + '/' + str(chrom) + '/' + subWinFile + str(subWin)
-    fileHandler = open(filename, 'r')
-        if len(res) == 0:
-        for line in fileHandler:
-        splited = line.split()[0]
-        res.append(splited[0])
+        filename = subWinDir + '/' + str(chrom) + '/' + subWinFile + str(subWin)
+        fileHandler = open(filename, 'r')
+        if not res: # subWin is the first window
+            for line in fileHandler:
+                res.append(line[0])
         else:
-        nLine = 0
-                for line in fileHandler:
-            splited = line.split()[0]
-            res[nLine] = res[nLine] + splited[0]
-            nLine = nLine + 1
+            nLine = 0
+            for line in fileHandler:
+                res[nLine] = res[nLine] + line[0]
+                nLine = nLine + 1
     fileHandler.close()
     hapData.append(res)
     return hapData

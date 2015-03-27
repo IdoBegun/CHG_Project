@@ -1,0 +1,1 @@
+# Needed for initialization of the IBD directory

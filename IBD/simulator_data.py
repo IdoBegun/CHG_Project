@@ -38,7 +38,8 @@ def simplify_input_data(filename, snpCount, outDir):
         outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
         
     personListFileHandle = open(outDir + "/" + personListFilename, 'w')
-        
+    
+    # Read each char separately, because reading the entire line crashes the program
     while x:
         if x in string.whitespace:
             if len(st) == 2:
@@ -103,6 +104,7 @@ def simplify_snp_data(filename, outDir):
     inputFileHandle.readline()
     
     outputFileHandles = []
+    # TODO: make sure we compute data for all chromosomes
     for chrom in range(numChrom):
         outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
     
@@ -162,37 +164,6 @@ def load_person_list(directory, filename):
     res = []
     for line in fileHandle:
         res.append(line.strip())
-    
-    return res
-
-################################################################################
-#                               compute_generation                             #
-################################################################################
-
-def compute_generation(hapData, simAlleleFreqs, pop1AlleleFreqs, \
-                       pop2AlleleFreqs, ind1, ind2, snpOffsets):
-    '''
-    Input:
-    hapData - Haplotype data
-    simAlleleFreqs - List of allele frequencies of simulator data
-    pop1AlleleFreqs - List of allele frequencies of the first population
-    pop2AlleleFreqs - List of allele frequencies of the second population
-    ind1 - Index of the first SNP
-    ind2 - Index of the second SNP (ind2 > ind1)
-    snpOffsets - List of SNP offsets
-    
-    Output:
-    Estimated number of generations
-    '''
-    
-    alleleCorr = compute_allele_correlation(hapData, ind1, ind2)
-    simScore = alleleCorr - (simAlleleFreqs[ind1] *simAlleleFreqs[ind2])
-    dist = snpOffsets[ind2] - snpOffsets[ind1]
-    popDiff1 = abs(pop1AlleleFreqs[ind1] - pop2AlleleFreqs[ind1])
-    popDiff2 =  abs(pop1AlleleFreqs[ind2] - pop2AlleleFreqs[ind2])
-    logNumerator = 4 * simScore
-    logDenominator = popDiff1 * popDiff2
-    res = (-1) * log(logNumerator / logDenominator) / dist
     
     return res
 

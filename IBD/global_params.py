@@ -66,7 +66,10 @@ beagleExe = ""
 
 # When calculating dependencies between SNPs, this is the maximum value
 # we consider as independent
-indEpsilon = 0.00001
+indEpsilon = 0.00000001
+
+# Minimum number of SNPs in each LD independent window (don't set to less than 3!
+minInd = 3
 
 # Epsilon used for BEAGLE
 beagleEpsilon = 0.00001

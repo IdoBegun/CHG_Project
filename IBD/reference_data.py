@@ -29,11 +29,12 @@ def simplify_ref_data(filename, snpCount, outDir):
     fileHandle = open(filename, 'r')
     populationName = filename.split('.')[0]
     firstLine = fileHandle.readline().split()
-    numPersons = len(firstLine) - 3
+    numHaps = len(firstLine) - 3
     chrom = 1
     count = 0
-    data = [[] for y in range(numPersons)]
+    data = [[] for y in range(numHaps)]
     
+    #TODO: debug?
     #print "--> simplify_ref_data: Started reading data for chromosome %s..." % (chrom),
     
     for line in fileHandle:
@@ -44,14 +45,14 @@ def simplify_ref_data(filename, snpCount, outDir):
             sys.exit();
         
         count += 1
-        for i in range(numPersons):
+        for i in range(numHaps):
             data[i].append(splitLine[i + 3])
         
         if count == snpCount[chrom - 1]:
             outFileName = populationName + "_" + str(chrom)
             outputFileHandle = open(outDir + "/" + outFileName, 'w');
-            for person in data:
-                outputFileHandle.write(' '.join(person) + '\n')
+            for hap in data:
+                outputFileHandle.write(' '.join(hap) + '\n')
             outputFileHandle.close()
             if chrom != 1:
                 print "Done."
@@ -60,21 +61,21 @@ def simplify_ref_data(filename, snpCount, outDir):
             chrom += 1
             count = 0
             del data
-            data = [[] for y in range(numPersons)]
+            data = [[] for y in range(numHaps)]
     
     print "Done."
     fileHandle.close()
-    #print "Done."
 
 ################################################################################
 #                               compute_LD_windows                             #
 ################################################################################
-
-def compute_LD_windows(hapData, epsilon):
+#TODO: change function name to LD_independent_windows - do it also for load_LD, ...
+def compute_LD_windows(hapData, epsilon, minInd):
     '''
     Input:
     hapData - A list of haplotypa data (strings)
     epsilon - Maximum threshold for LD score
+    minInd - Minimum number of SNPs in each window
     
     Output:
     A list containing windows in which both start and end indices have LD
@@ -91,6 +92,10 @@ def compute_LD_windows(hapData, epsilon):
     j = 1
     while (j < hapLen):
         viable = True
+        if (((j - 1) - i + 1) < minInd):
+            j += 1
+            continue
+
         for k in range(numPop):
             alleleCorr = compute_allele_correlation(hapData[k], i, j)
         
@@ -101,27 +106,33 @@ def compute_LD_windows(hapData, epsilon):
                 break
             
         if viable:
-            res.append((i,j))
-            i = j + 1
+            res.append([i,j - 1])
+            i = j
             j = i + 1
         else:
-            j = j + 1
+            j += 1
     
-    if (((i, j - 1)) != res[-1]):
-        res.append((i, j - 1))
+    if ([i, j - 1] != res[-1]):
+        res.append([i, j - 1])
+    
+    # In case the last window is smaller than minInd, merge last two windows
+    if ((res[-1][1] - res[-1][0] + 1) < minInd):
+        res[-2][1] = res[-1][1]
+        res = res[:-1]
     
     return res
     
 ################################################################################
 #                                 load_LD_windows                               #
 ################################################################################
-
-def load_LD_windows(directory, hapData, epsilon):
+# TODO - change the function name to something with independent
+def load_LD_windows(directory, hapData, epsilon, minInd):
     '''
     Input:
     directory - Directory to save the data to or load from
     hapData - A list of haplotypa data (strings)
     epsilon - Maximum threshold for LD score
+    minInd - Minimum number of SNPs in each window
     
     Output:
     List of LD windows. The list is loaded from a file if it exists, otherwise
@@ -130,7 +141,7 @@ def load_LD_windows(directory, hapData, epsilon):
     print "--> --> --> Computing LD windows...",
     filename = directory + '/ld_windows'
     if not os.path.exists(filename):
-        res = compute_LD_windows(hapData, epsilon)
+        res = compute_LD_windows(hapData, epsilon, minInd)
         
         fileHandle = open(filename, 'w')
         for window in res:
