@@ -52,19 +52,19 @@ void getData(string& path, unsigned int chromozomeNumber, unsigned int window,
 {
   // read the simulator data
   stringstream ssSimulator;
-  ssSimulator << path << "\\chrom" << chromozomeNumber << "\\pop0\\win" << window << ".txt"; // population0 = simulator data
+  ssSimulator << path << "/chrom" << chromozomeNumber << "/pop0/win" << window << ".txt"; // population0 = simulator data
   string fileNameSimulator = ssSimulator.str();
   getDataFromFile(fileNameSimulator, simulator/*out*/);
 
   // read the reference data of population A
   stringstream ssPopulationA;
-  ssPopulationA << path << "\\chrom" << chromozomeNumber << "\\pop1\\win" << window << ".txt"; // population1 = reference data of population A
+  ssPopulationA << path << "/chrom" << chromozomeNumber << "/pop1/win" << window << ".txt"; // population1 = reference data of population A
   string fileNamePopulationA = ssPopulationA.str();
   getDataFromFile(fileNamePopulationA, populationA/*out*/);
 
   // read the reference data of population B
   stringstream ssPopulationB;
-  ssPopulationB << path << "\\chrom" << chromozomeNumber << "\\pop2\\win" << window << ".txt"; // population2 = reference data of population B
+  ssPopulationB << path << "/chrom" << chromozomeNumber << "/pop2/win" << window << ".txt"; // population2 = reference data of population B
   string fileNamePopulationB = ssPopulationB.str();
   getDataFromFile(fileNamePopulationB, populationB/*out*/);
 }
@@ -256,7 +256,7 @@ void createResultFile(string& path, unsigned int chromozomeNumber,
                       bool debug)
 {
   stringstream ss;
-  ss << path << "\\chrom" << chromozomeNumber << "\\results.txt";
+  ss << path << "/chrom" << chromozomeNumber << "/results.txt";
   string fileName = ss.str();
 
   ofstream file;
