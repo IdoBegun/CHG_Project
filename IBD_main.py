@@ -175,7 +175,7 @@ for chrom in range(chromsToCompute):
     for iWindow in range(nWindows):
         winPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleGenFile + str(iWindow) + '.vcf.gz'
         refPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleRefFile + str(iWindow) + '.vcf'
-        outputPath = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/win' + str(iWindow)
+        outputPath = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/win' + str(iWindow) + '.vcf'
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + ' ref=' + refPath + ' out=' + outputPath
         
         output = subprocess.check_output(command, shell=True)
@@ -188,9 +188,8 @@ for chrom in range(chromsToCompute):
         if output:
             print output
 
-    load_beagle_phased_data(chrom, windowList, inDir, inFile, \
-                            phasedDirectory, phasedWindowFile, \
-                            chromProcessedDirectory)
+    outputDir = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/'
+    load_beagle_phased_data(chrom, windowList, outputDir, outputDir)
 
     if chrom == 0:
         # update the number of generations according to the first chromosome
