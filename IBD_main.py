@@ -171,17 +171,17 @@ for chrom in range(chromsToCompute):
                         str(chrom + 1) + '/pop0/win' + str(iWindow)
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
                     ' ref=' + refPath + ' out=' + outputPath
-        
-        output = subprocess.check_output(command, shell=True)
-        if output:
-            print output
-        
-        command = "gunzip " + outputPath + ".vcf.gz"
-        
-        output = subprocess.check_output(command, shell=True)
-        if output:
-            print output
-
+        if not os.path.exists(outputPath + '.vcf'):
+            output = subprocess.check_output(command, shell=True)
+            if output:
+                print output
+            
+            command = "gunzip " + outputPath + ".vcf.gz"
+            
+            output = subprocess.check_output(command, shell=True)
+            if output:
+                print output
+    
     outputDir = global_params.phasedDirectory + '/chrom' + str(chrom + 1) + \
                 '/pop0/'
     load_beagle_phased_data(chrom, windowList, outputDir, outputDir)

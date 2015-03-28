@@ -3,6 +3,7 @@ import sys, re, string, os, math, subprocess
 from IBD.global_params import *
 from IBD.reference_data import *
 from IBD.common import *
+from fileinput import filename
 
 ################################################################################
 #                               compute_windows                                #
@@ -24,37 +25,43 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
     Output:
     A list of new windows considering: LD windows, number of SNPs in window and window size.
     '''
-    expectedRecomb = pow(10, 8)/numGen
-    maxWindowLen = expectedRecomb/recombFact
-    res = []
-    winLD = load_LD_ind_windows(inDir, hapData)
-    offsets = get_snp_offsets(chrom) 
-
-    for [winLDStart, winLDEnd] in winLD:
-        posStart = winLDStart
-        posEnd = posStart + 1
-        while (posEnd <= winLDEnd):
-            while ((posEnd - posStart) < maxWindowSNPs ) and \
-                  (posEnd <= winLDEnd) and \
-                  (offsets[posEnd] - offsets[posStart] <= maxWindowLen):
-                posEnd += 1
-            res.append([posStart, posEnd - 1])
-            posStart = posEnd
-            posEnd = posStart + 1
-        res[-1][1] = winLDEnd
     
-        if (res[-1][1] - res[-1][0] < minInd) and (len(res) > 2):
-            res[-2][1] = winLDEnd
-            res = res[:-1]
-        
-    if not os.path.exists(outDir + '/' + str(chrom)):
-        os.makedirs(outDir + '/' + str(chrom))
     outputPath = outDir + '/' + str(chrom) + '/' + outFile
-    outputFileHandler = open(outputPath, 'w')
-    for [winStart, winEnd] in res:
-        outputFileHandler.write(str(winStart) + ' ' + str(winEnd) + '\n')
-    outputFileHandler.close()    
-    return res
+    if os.path.exists(outputPath):
+        print "--> sub windows for chrom %s already created, skipping" % (chrom)
+        return read_windows(outDir, outFile)
+    else:
+        expectedRecomb = pow(10, 8)/numGen
+        maxWindowLen = expectedRecomb/recombFact
+        res = []
+        winLD = load_LD_ind_windows(inDir, hapData)
+        offsets = get_snp_offsets(chrom) 
+    
+        for [winLDStart, winLDEnd] in winLD:
+            posStart = winLDStart
+            posEnd = posStart + 1
+            while (posEnd <= winLDEnd):
+                while ((posEnd - posStart) < maxWindowSNPs ) and \
+                      (posEnd <= winLDEnd) and \
+                      (offsets[posEnd] - offsets[posStart] <= maxWindowLen):
+                    posEnd += 1
+                res.append([posStart, posEnd - 1])
+                posStart = posEnd
+                posEnd = posStart + 1
+            res[-1][1] = winLDEnd
+        
+            if (res[-1][1] - res[-1][0] < minInd) and (len(res) > 2):
+                res[-2][1] = winLDEnd
+                res = res[:-1]
+            
+        if not os.path.exists(outDir + '/' + str(chrom)):
+            os.makedirs(outDir + '/' + str(chrom))
+            
+        outputFileHandler = open(outputPath, 'w')
+        for [winStart, winEnd] in res:
+            outputFileHandler.write(str(winStart) + ' ' + str(winEnd) + '\n')
+        outputFileHandler.close()    
+        return res
 
 
 ################################################################################
@@ -109,15 +116,17 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
                     print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
 
             outputPath = fullOutDir + '/win' + str(iWindow)
-
-            outFileHandler = open(outputPath, 'w')
-            [winStart, winEnd] = windowList[iWindow]
-            nHaps = len(hapData[pop])
-            for iHap in range(nHaps):
-                for iSnp in range(winStart, winEnd + 1):
-                    outFileHandler.write(hapData[pop][iHap][iSnp])
-                outFileHandler.write('\n')
-            outFileHandler.close()
+            if os.path.exists(outputPath):
+                print "--> file for window %s already created, skipping" % (iWindow)
+            else:
+                outFileHandler = open(outputPath, 'w')
+                [winStart, winEnd] = windowList[iWindow]
+                nHaps = len(hapData[pop])
+                for iHap in range(nHaps):
+                    for iSnp in range(winStart, winEnd + 1):
+                        outFileHandler.write(hapData[pop][iHap][iSnp])
+                    outFileHandler.write('\n')
+                outFileHandler.close()
 ################################################################################
 #                            create_beagle_ref_data                            #
 ################################################################################
@@ -143,37 +152,40 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
                     print "--> --> create_beagle_ref_data: creating file for window %s..." % (iWindow)
 
         filename = outputDir + '/' + outFile + str(iWindow) + '.vcf'
-        outputFileHandler = open(filename, 'w', 10000)
-        [winStart, winEnd] = windowList[iWindow]
-
-        
-        outputFileHandler.write('##fileformat=VCFv4.1\n')
-        outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,' \
-                                'Description="Genotype">\n')
-        outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
-
-        nHaps = len(hapData[0]) + len(hapData[1])
-        for iPerson in range((nHaps / 2)):
-            outputFileHandler.write('\tPERSON' + str(iPerson + 1))
-        outputFileHandler.write('\n')
-
-        #hapLen = len(hapData[0][0])
-        for iSnp in range(winStart, winEnd + 1):
-        # snpName = snpLocation since we're phasing small windows
-            outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
-                                    (str(chrom), str(iSnp + 1), str(iSnp + 1)))
-            for pop in hapData:
-                for hapNum in range(len(pop)):
-                    if not hapNum % 2:
-                        outputFileHandler.write('\t' + pop[hapNum][iSnp])
-                    else:
-                        outputFileHandler.write('|' + pop[hapNum][iSnp])
+        if os.path.exists(filename):
+                print "--> VCF reference data file for window %s already created, skipping" % (iWindow)
+        else:
+            outputFileHandler = open(filename, 'w', 10000)
+            [winStart, winEnd] = windowList[iWindow]
+    
             
-            outputFileHandler.write('\n')       
-        
-        
-        
-        outputFileHandler.close()
+            outputFileHandler.write('##fileformat=VCFv4.1\n')
+            outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,' \
+                                    'Description="Genotype">\n')
+            outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
+    
+            nHaps = len(hapData[0]) + len(hapData[1])
+            for iPerson in range((nHaps / 2)):
+                outputFileHandler.write('\tPERSON' + str(iPerson + 1))
+            outputFileHandler.write('\n')
+    
+            #hapLen = len(hapData[0][0])
+            for iSnp in range(winStart, winEnd + 1):
+            # snpName = snpLocation since we're phasing small windows
+                outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
+                                        (str(chrom), str(iSnp + 1), str(iSnp + 1)))
+                for pop in hapData:
+                    for hapNum in range(len(pop)):
+                        if not hapNum % 2:
+                            outputFileHandler.write('\t' + pop[hapNum][iSnp])
+                        else:
+                            outputFileHandler.write('|' + pop[hapNum][iSnp])
+                
+                outputFileHandler.write('\n')       
+            
+            
+            
+            outputFileHandler.close()
 
 
 ################################################################################
@@ -201,41 +213,43 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
                     print "--> --> create_beagle_sim_data: creating file for window %s..." % (iWindow)
 
         filename = outputDir + '/' + outFile + str(iWindow) + '.vcf'
-        outputFileHandler = open(filename, 'w')
-        [winStart, winEnd] = windowList[iWindow]
-
-        
-        outputFileHandler.write('##fileformat=VCFv4.1\n')
-        outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,\
-                                Description="Genotype">\n')
-        outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
-        for iPerson in range(len(genData)):
-            outputFileHandler.write('\tSIMPERSON' + str(iPerson + 1))
-        outputFileHandler.write('\n')
-
-        for iSnp in range(winStart, winEnd + 1):
-            outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
-                                    (str(chrom), str(iSnp + 1), str(iSnp + 1)))
-            for gen in genData:
-                if gen[iSnp] == '0':
-                    outputFileHandler.write('\t0/0')
-                if gen[iSnp] == '1':
-                    outputFileHandler.write('\t0/1')
-                if gen[iSnp] == '2':
-                    outputFileHandler.write('\t1/1')
+        if os.path.exists(filename + '.gz'):
+                print "--> VCF simulator data file for window %s already created, skipping" % (iWindow)
+        else:
+            outputFileHandler = open(filename, 'w')
+            [winStart, winEnd] = windowList[iWindow]
+    
+            outputFileHandler.write('##fileformat=VCFv4.1\n')
+            outputFileHandler.write('##FORMAT=<ID=GT,Number=1,Type=String,\
+                                    Description="Genotype">\n')
+            outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
+            for iPerson in range(len(genData)):
+                outputFileHandler.write('\tSIMPERSON' + str(iPerson + 1))
+            outputFileHandler.write('\n')
+    
+            for iSnp in range(winStart, winEnd + 1):
+                outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
+                                        (str(chrom), str(iSnp + 1), str(iSnp + 1)))
+                for gen in genData:
+                    if gen[iSnp] == '0':
+                        outputFileHandler.write('\t0/0')
+                    if gen[iSnp] == '1':
+                        outputFileHandler.write('\t0/1')
+                    if gen[iSnp] == '2':
+                        outputFileHandler.write('\t1/1')
+                
+                outputFileHandler.write('\n')       
             
-            outputFileHandler.write('\n')       
+            
+            
+            outputFileHandler.close()
         
-        
-        
-        outputFileHandler.close()
-        
-        command = 'gzip ' + filename
-        
-        output = subprocess.check_output(command, shell=True)
-        if output:
-            print output
-        
+            command = 'gzip ' + filename
+            
+            output = subprocess.check_output(command, shell=True)
+            if output:
+                print output
+            
         
 ################################################################################
 #                           load_beagle_phased_data                            #
@@ -258,33 +272,36 @@ def load_beagle_phased_data(chrom, windowList, inDir, outDir):
         if DEBUG:
             print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
 
-        inPath = inDir + 'win' + str(iWindow) + '.vcf'
-        inputFileHandler = open(inPath, 'r')
-        # read data from beagle file
-        hapData = [] # format: row = SNP, column = haplotype
-        lineCounter = 0
-        for line in inputFileHandler:
-            if lineCounter >= 10:
-                splittedLine = line.split()
-                snpData = []
-                nPerson = len(splittedLine) - 9
-                for iPerson in range(nPerson):
-                    personData = splittedLine[9 + iPerson]
-                    snpData.append(personData[0])
-                    snpData.append(personData[2])
-                hapData.append(snpData)
-                
-            lineCounter = lineCounter + 1
-   
         outPath = outDir + 'win' + str(iWindow)
-        outputFileHandler = open(outPath, 'w')
-        nHaplotypes = len(hapData[0])
-        nSnps = len(hapData)
-        for iHap in range(nHaplotypes):
-            for iSNP in range(nSnps):
-                outputFileHandler.write(hapData[iSNP][iHap])
-            outputFileHandler.write('\n')
-        outputFileHandler.close()
+        if os.path.exists(outPath):
+                print "--> beagle phased data for window %s already created, skipping" % (iWindow)
+        else:
+            inPath = inDir + 'win' + str(iWindow) + '.vcf'
+            inputFileHandler = open(inPath, 'r')
+            # read data from beagle file
+            hapData = [] # format: row = SNP, column = haplotype
+            lineCounter = 0
+            for line in inputFileHandler:
+                if lineCounter >= 10:
+                    splittedLine = line.split()
+                    snpData = []
+                    nPerson = len(splittedLine) - 9
+                    for iPerson in range(nPerson):
+                        personData = splittedLine[9 + iPerson]
+                        snpData.append(personData[0])
+                        snpData.append(personData[2])
+                    hapData.append(snpData)
+                    
+                lineCounter = lineCounter + 1
+       
+            outputFileHandler = open(outPath, 'w')
+            nHaplotypes = len(hapData[0])
+            nSnps = len(hapData)
+            for iHap in range(nHaplotypes):
+                for iSNP in range(nSnps):
+                    outputFileHandler.write(hapData[iSNP][iHap])
+                outputFileHandler.write('\n')
+            outputFileHandler.close()
 
 ################################################################################
 #                           compute_generation                                 #
