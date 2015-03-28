@@ -102,7 +102,7 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
             if DEBUG:
                     print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
 
-            outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow)
+            outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow) + '.txt'
             outFileHandler = open(outputPath, 'w')
             [winStart, winEnd] = windowList[iWindow]
             nHaps = len(hapData[pop])
@@ -145,18 +145,19 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
                                 'Description="Genotype">\n')
         outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
 
-        nPop = len(hapData[0]) + len(hapData[1])
-        for iPerson in range(nPop):
+        nHaps = len(hapData[0]) + len(hapData[1])
+        for iPerson in range((nHaps / 2)):
             outputFileHandler.write('\tPERSON' + str(iPerson + 1))
         outputFileHandler.write('\n')
 
         hapLen = len(hapData[0][0])
         for iSnp in range(hapLen):
+        # snpName = snpLocation since we're phasing small windows
             outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
                                     str(chrom), str(iSnp + 1), str(iSnp + 1))
-            for pop in hapLen:
+            for pop in hapData:
                 for hapNum in range(len(pop)):
-                    if hapNum % 2:
+                    if not hapNum % 2:
                         outputFileHandler.write('\t' + pop[hapNum][iSnp])
                     else:
                         outputFileHandler.write('|' + pop[hapNum][iSnp])
@@ -210,11 +211,11 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
             outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
                                     str(chrom), str(iSnp + 1), str(iSnp + 1))
             for gen in genData:
-                if gen == '0':
+                if gen[iSnp] == '0':
                     outputFileHandler.write('\t0/0')
-                if gen == '1':
+                if gen[iSnp] == '1':
                     outputFileHandler.write('\t0/1')
-                if gen == '2':
+                if gen[iSnp] == '2':
                     outputFileHandler.write('\t1/1')
             
             outputFileHandler.write('\n')       
@@ -234,14 +235,13 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
 #                           load_beagle_phased_data                            #
 ################################################################################
 
-def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
+def load_beagle_phased_data(chrom, windowList, inDir, outDir):
     '''
     Input:
     chrom - chromosome number
     windowList - list of windows dividing the chromosome to work by
 
     inDir - name of directory contains the admixture haplotype in VCF format
-    inFile - name of file contains the admixture haplotype in VCF format
     outDir - name of directory to store the admixture haplotype
 
     Output:
@@ -253,10 +253,10 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
         if DEBUG:
             print "--> --> load_beagle_phased_data: reading file for window %s..." % (iWindow)
 
-        inPath = inDir + '/' + str(chrom) + '/' + inFile + str(iWindow + 1)
+        inPath = inDir + 'win' + str(iWindow) + '.vcf'
         inputFileHandler = open(inPath, 'r')
         # read data from beagle file
-        hapData = []
+        hapData = [] # format: row = SNP, column = haplotype
         lineCounter = 0
         for line in inputFileHandler:
             if lineCounter >= 10:
@@ -271,7 +271,7 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
                 
             lineCounter = lineCounter + 1
    
-        outPath = outDir + '/chrom' + str(chrom) + '/pop0/' + str(iWindow)
+        outPath = outDir + 'win' + str(iWindow) + '.txt'
         outputFileHandler = open(outPath, 'w')
         nHaplotypes = len(hapData[0])
         nSnps = len(hapData)
@@ -279,6 +279,7 @@ def load_beagle_phased_data(chrom, windowList, inDir, inFile, outDir):
             for iSNP in range(nSnps):
                 outputFileHandler.write(hapData[iSNP][iHap])
             outputFileHandler.write('\n')
+        outputFileHandler.close()
 
 ################################################################################
 #                           compute_generation                                 #

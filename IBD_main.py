@@ -159,7 +159,7 @@ for chrom in range(chromsToCompute):
                     str(chrom + 1) + '/' + global_params.beagleRefFile + \
                     str(iWindow) + '.vcf'
         outputPath = global_params.phasedDirectory + '/chrom' + \
-                        str(chrom + 1) + '/pop0/win' + str(iWindow)
+                        str(chrom + 1) + '/pop0/win' + str(iWindow) + '.vcf'
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
                     ' ref=' + refPath + ' out=' + outputPath
         
@@ -173,10 +173,9 @@ for chrom in range(chromsToCompute):
         if output:
             print output
 
-    load_beagle_phased_data(chrom, windowList, inDir, inFile, \
-                            global_params.phasedDirectory, \
-                            global_params.phasedWindowFile, \
-                            chromProcessedDirectory)
+    outputDir = global_params.phasedDirectory + '/chrom' + str(chrom + 1) + \
+                '/pop0/'
+    load_beagle_phased_data(chrom, windowList, outputDir, outputDir)
 
     if chrom == 0:
         # update the number of generations according to the first chromosome
