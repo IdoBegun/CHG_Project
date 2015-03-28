@@ -10,15 +10,15 @@ from reference_data import get_snp_offsets
 def read_ibd_results(inputDir, chrom):
     '''
     Input:
-    inputDir - Name of a directory containing the personList file
+    inputDir - Name of a directory containing the IBD results file
     chrom - Chromosome number
-    numBlocks - Number of blocks for the relevant chromosome
 
     Output:
-    A list containing all person IDs in the personList file
+    2d list. 1st index is the block number, 2nd index is
+        the pairs who have IBD in this block
     '''
     
-    fileName = inputDir + "/chrom" + str(chrom)
+    fileName = inputDir + "/chrom" + str(chrom) + "/results"
     fileHandle = open(fileName, 'r')
     res = []
     
@@ -78,7 +78,7 @@ def process_results(resList, chrom, personList, windowList):
     '''
     Input:
     resList - 2d list. 1st index is the block number, 2nd index is
-        the number of pairs who have IBD in said block
+        the pairs who have IBD in this block
     chrom - Chromosome number
     personList - Person list
 
@@ -86,7 +86,7 @@ def process_results(resList, chrom, personList, windowList):
     A 3d list:
         1st index - first person index
         2nd index - second person index
-        3rd index - number of SNPs ranges in which both persons have IBD
+        3rd index - the SNPs ranges in which both persons have IBD
     
     The value of each entry is a pair of indices - indicating IBD between these
     indices
@@ -101,27 +101,27 @@ def process_results(resList, chrom, personList, windowList):
     for blockInd in range(numBlocks):
         for pair in resList[blockInd]:
             first = pair[0]
-            second = pair[2]
+            second = pair[1]
             ibdBlocks[first][second].append(blockInd)
     
     res = [[[] for x in range(numPersons)] for y in range(numPersons)]
     for person1 in range(numPersons):
         for person2 in range(numPersons):
             if ibdBlocks[person1][person2]:
-                start = -2
-                end = start
-                for block in ibdBlocks[person1][person2]:
-                    if (block == end + 1):
-                        end = block
-                    else:
-                        res[person1][person2].append((start,end))
-                        start = block
-                        end = start
-                
-                startOffset = offsets[windowList[start][0]]
-                endOffset = offsets[windowList[end + global_params.blockSize][1]]
-                res[person1][person2].append((startOffset, endOffset))
-    
+				startBlock = ibdBlocks[person1][person2][0]
+				endBlock = startBlock
+				for block in ibdBlocks[person1][person2][1:]:
+					if block = endBlock+1:
+						endBlock = block
+					else:
+						startOffset = offsets[windowList[startBlock][0]]
+						endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
+						res[person1][person2].append((startOffset, endOffset))
+						startBlock = block
+						endBlock = block
+				startOffset = offsets[windowList[startBlock][0]]
+				endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
+				res[person1][person2].append((startOffset, endOffset))
     return res
 
 ################################################################################
