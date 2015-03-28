@@ -44,7 +44,6 @@ void getDataFromFile(string& fileName, vector<string>& population)
   file.close();
 }
 
-// IdoB: Linux uses slash as a path delimeters, not backslash
 void getData(string& path, unsigned int chromozomeNumber, unsigned int window,
              vector<string>& simulator/*out*/,
              vector<string> populationA/*out*/,
@@ -115,7 +114,6 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
             << " haplotypes: " << i << "-" << j << " (" << simulator.size() << ")" << endl;
         }
 
-        // IdoB: Does the compiler optimize the declaration of these variables?
         double origIA = simulatorProbabilityA[i];
         double origIB = simulatorProbabilityB[i];
         double origJA = simulatorProbabilityA[j];

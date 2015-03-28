@@ -3,9 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
-void LDTree::insertNodeToArray(LDNode* node, int depth)
+void LDTree::insertNodeToArray(LDNode* node, unsigned int depth)
 {
-  // IdoB: Index might be out of bound
   if (this->depthArray[depth]!=NULL)
   {
     LDNode* currentNode = this->depthArray[depth];
@@ -29,14 +28,14 @@ LDTree::LDNode::~LDNode()
   this->possibleStrings.clear(); // as the deafult dtor but more clear like this
 }
 
-LDTree::LDNode* LDTree::createNode(LDNode* parent, int depth)
+LDTree::LDNode* LDTree::createNode(LDNode* parent, unsigned int depth)
 {
   LDNode* node = new LDNode(parent);
   insertNodeToArray(node, depth);
   return node;
 }
 
-void LDTree::createChain(LDNode* node, string haplotype, int depth)
+void LDTree::createChain(LDNode* node, string haplotype, unsigned int depth)
 {
   node->possibleStrings.insert(haplotype);
   LDNode* child;
@@ -69,7 +68,7 @@ void LDTree::createChain(LDNode* node, string haplotype, int depth)
 
 void LDTree::buildTree(const vector<string>& haplotypes)
 {
-  int hapLength  = haplotypes[0].size();
+  unsigned int hapLength  = haplotypes[0].size();
   this->depthArray.resize(hapLength, NULL);
   this->root = createNode(NULL, 0);
   for (vector<string>::const_iterator iter = haplotypes.begin(); iter!=haplotypes.end(); iter++)
@@ -116,7 +115,7 @@ void LDTree::squeezeNodes(LDNode* node, LDNode* temp)
   squeezeNumbers(node, temp);
 }
 
-void LDTree::squeezeLevel(int depth)
+void LDTree::squeezeLevel(unsigned int depth)
 {
   LDNode* node = depthArray[depth];
   LDNode* next;
@@ -175,7 +174,7 @@ LDTree::LDTree(const vector<string>& haplotypes, bool debug)
   squeezeTree();
 }
 
-void LDTree::nullDepthChildren(LDNode* node, int currentChild)
+void LDTree::nullDepthChildren(LDNode* node, unsigned int currentChild)
 {
   if ((currentChild==0) && (node->childrenPtr[0]==node->childrenPtr[1]))
   {
@@ -211,7 +210,7 @@ void LDTree::nullDepthChildren(LDNode* node, int currentChild)
   }
 }
 
-void LDTree::updateDepthArray(LDNode* node, int depth)
+void LDTree::updateDepthArray(LDNode* node, unsigned int depth)
 {
   LDNode* prev = node->prevInDepth;
   LDNode* next = node->nextInDepth;
@@ -230,7 +229,7 @@ void LDTree::updateDepthArray(LDNode* node, int depth)
   }
 }
 
-void LDTree::freeNodes(LDNode* node, int depth)
+void LDTree::freeNodes(LDNode* node, unsigned int depth)
 {
   if (node->childrenPtr[0] != NULL)
   {
@@ -253,7 +252,7 @@ LDTree::~LDTree()
   this->depthArray.clear();
 }
 
-int LDTree::getChildInfo(const LDNode* const parent, const char& SNP, LDNode** child)
+unsigned int LDTree::getChildInfo(const LDNode* const parent, const char& SNP, LDNode** child)
 {
   if (SNP=='0')
   {
@@ -273,7 +272,7 @@ double LDTree::getHaplotypeProbability(const string& haplotype)
   double res = 1;
   LDNode* node = this->root;
   LDNode* child;
-  int childNum;
+  unsigned int childNum;
   for (unsigned int i = 0 ; i < haplotype.size(); i++)
   {
     const char& SNP = haplotype[i];
@@ -298,11 +297,10 @@ double LDTree::getIBDProbability(const string& haplotype1, const string& haploty
   LDNode* node2 = this->root;
   LDNode* child1;
   LDNode* child2;
-  int child1Num, child2Num;
+  unsigned int child1Num, child2Num;
   double child1Prob, child2Prob;
   for (unsigned int i = 0; i < haplotype1.size(); i++)
   {
-	// IdoB: Use char instead of const char reference
     const char& SNP1 = haplotype1[i];
     const char& SNP2 = haplotype2[i];
     child1Num = getChildInfo(node1, SNP1, &child1);

@@ -23,7 +23,7 @@ private:
     LDNode(LDNode* parent);
     ~LDNode();
     LDNode* childrenPtr[2];
-    int childrenNum[2];
+    unsigned int childrenNum[2];
     set<string> possibleStrings;
     LDNode* originParent;
     LDNode* nextInDepth;
@@ -35,23 +35,23 @@ private:
 
   // ctor - help functions
   // 1. build the tree
-  void createChain(LDNode* node, string haplotype, int depth);
-  void insertNodeToArray(LDNode* node, int depth);
-  LDNode* createNode(LDNode* parent, int depth);
+  void createChain(LDNode* node, string haplotype, unsigned int depth);
+  void insertNodeToArray(LDNode* node, unsigned int depth);
+  LDNode* createNode(LDNode* parent, unsigned int depth);
   void buildTree(const vector<string>& haplotypes);
   // 2. squeeze common parts of the tree
   void squeezeNumbers(LDNode* node, LDNode* temp);
   void squeezeNodes(LDNode* node, LDNode* temp);
-  void squeezeLevel(int depth);
+  void squeezeLevel(unsigned int depth);
   void squeezeTree();
 
   // dtor - help functions
-  void nullDepthChildren(LDNode* node, int currentChild);
-  void updateDepthArray(LDNode* node, int depth);
-  void freeNodes(LDNode* node, int depth);
+  void nullDepthChildren(LDNode* node, unsigned int currentChild);
+  void updateDepthArray(LDNode* node, unsigned int depth);
+  void freeNodes(LDNode* node, unsigned int depth);
 
   // getHaplotypeProbability + getIBDProbability - help function
-  int getChildInfo(const LDNode* const parent, const char& SNP, LDNode** child); // fill the child ptr, return the child number
+  unsigned int getChildInfo(const LDNode* const parent, const char& SNP, LDNode** child); // fill the child ptr, return the child number
 
   // printLDTree - help functions
   void printRecursiveNodes(LDNode* node);
