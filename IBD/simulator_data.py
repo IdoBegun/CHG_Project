@@ -1,5 +1,5 @@
 import os, string, sys
-from global_params import numChrom, personListFilename, DEBUG
+import global_params
 from common import compute_allele_correlation, compute_allele_frequencies
 from math import log
 
@@ -7,7 +7,7 @@ from math import log
 #                             simplify_input_data                              #
 ################################################################################
 
-def simplify_input_data(filename, snpCount, outDir):
+def simplify_input_data():
     '''
     Input:
     filename - Name of the file containing haplotypes input data
@@ -22,6 +22,8 @@ def simplify_input_data(filename, snpCount, outDir):
     Also creates a file named "personList" which contains a list of all
     person IDs
     '''
+    filename = global_params.inputDataFile
+    outDir = global_params.inputDataDirectory
     
     if not os.path.exists(outDir):
         os.makedirs(outDir)
@@ -34,21 +36,26 @@ def simplify_input_data(filename, snpCount, outDir):
     name = None
     personCounter = 0
     outputFileHandles = []
-    for chrom in range(numChrom):
-        outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
+    for chrom in range(global_params.numChrom):
+        outputFileHandles.append(open(outDir + '/' + \
+                                      global_params.inputDataPrefix \
+                                      + str(chrom + 1),'w'))
         
-    personListFileHandle = open(outDir + "/" + personListFilename, 'w')
+    personListFileHandle = open(outDir + "/" + \
+                                global_params.personListFilename, 'w')
     
-    # Read each char separately, because reading the entire line crashes the program
+    # Read each char separately, because reading the entire line
+    # crashes the program
     while x:
         if x in string.whitespace:
             if len(st) == 2:
-                if chrom > numChrom: # Sanity
-                    print "Error: simplify_input_data: chromosome number mismatch"
+                if chrom > global_params.numChrom: # Sanity
+                    print "Error: simplify_input_data: chromosome number " \
+                            "mismatch"
                     sys.exit();
                 outputFileHandles[chrom - 1].write(st)
                 counter += 1
-                if counter == snpCount[chrom - 1]:
+                if counter == global_params.snpCount[chrom - 1]:
                     outputFileHandles[chrom - 1].write('\n')
                     chrom += 1
                     counter = 0
@@ -62,19 +69,21 @@ def simplify_input_data(filename, snpCount, outDir):
                 chrom = 1
                 if personCounter != 0:
                     personListFileHandle.write(' ')
-                    if DEBUG:
-                        print "Done."
+                    if global_params.DEBUG:
+                        print "Done"
                 personListFileHandle.write(name)
                 personCounter += 1
-                if DEBUG:
-                    print "--> --> simplify_input_data: Started reading person %s (%s)..." % (name, personCounter),
+                if global_params.DEBUG:
+                    print "    --> simplify_input_data: Started reading " \
+                            "person %s (%s)..." % (name, personCounter),
             st = ""
         else:
             st += x
         x = inputFileHandle.read(1)
     
     personListFileHandle.write('\n')
-    print "Done."
+    if global_params.DEBUG:
+        print "Done"
     personListFileHandle.close()
     for fileHandle in outputFileHandles:
         fileHandle.close()
@@ -84,30 +93,38 @@ def simplify_input_data(filename, snpCount, outDir):
 #                             simplify_snp_data                                #
 ################################################################################
 
-def simplify_snp_data(filename, outDir):
+def simplify_snp_data():
     '''
     Input:
-    filename - Name of the file containing haplotypes input data
-    outDir - Name of the directory which will contain all output files
+    None
     
     Output:
-    None - fills outDir with files in the format of:
+    Returns a list of number of SNPs in each chromosome
+    
+    Note:
+    Fills snpDataDirectory with files in the format of:
         Filename - chrom_<chrom number>
         Content -  Each line contains SNP data for the relevant SNP:
         name and offset
     '''
     
+    outDir = global_params.snpDataDirectory
+     
     if not os.path.exists(outDir):
         os.makedirs(outDir)
     
-    inputFileHandle = open(filename, 'r')
+    inputFilename = global_params.snpInfoFile
+    inputFileHandle = open(inputFilename, 'r')
     inputFileHandle.readline()
     
     outputFileHandles = []
-    # TODO: make sure we compute data for all chromosomes
-    for chrom in range(numChrom):
-        outputFileHandles.append(open(outDir + "/chrom_" + str(chrom + 1),'w'))
+    for chrom in range(global_params.numChrom):
+        outputFileHandles.append(open(outDir + '/' + \
+                                      global_params.snpDataPrefix + \
+                                      str(chrom + 1),
+                                      'w'))
     
+    res = [0 for x in range(global_params.numChrom)]
     
     for line in inputFileHandle:
         splitLine = line.split()
@@ -115,55 +132,37 @@ def simplify_snp_data(filename, outDir):
         
         snpName = splitLine[0]
         snpOffset = splitLine[2]
-        
+        res[chrom - 1] += 1
         outputFileHandles[chrom - 1].write(snpName + ' ' + snpOffset + '\n')
     
     for fileHandle in outputFileHandles:
         fileHandle.close()
     
     inputFileHandle.close()
+    
+    return res
+
 
 ################################################################################
 #                            read_person_list_file                             #
 ################################################################################
 
-def read_person_list_file(inputDir):
+def read_person_list_file():
     '''
     Input:
-    inputDir - Name of a directory containing the personList file
+    None
 
     Output:
     A list containing all person IDs in the personList file
     '''
     
-    fileName = inputDir + '/' + personListFilename
+    fileName = global_params.inputDataDirectory + '/' + \
+                global_params.personListFilename
     fileHandle = open(fileName, 'r')
     line = fileHandle.readline()
-    res = line.split() 
+    res = line.strip().split() 
     
     fileHandle.close()
     return res
 
-
-################################################################################
-#                                load_person_list                              #
-################################################################################
-
-def load_person_list(directory, filename):
-    '''
-    Input:
-    directory - Directory which includes the personList file
-    
-    Output:
-    List of person IDs
-    '''
-    
-    filename = directory + '/' + filename
-    fileHandle = open(filename, 'r')
-    
-    res = []
-    for line in fileHandle:
-        res.append(line.strip())
-    
-    return res
 

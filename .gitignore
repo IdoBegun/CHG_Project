@@ -41,3 +41,21 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.project
+ibdresults1
+*.pyc
+snp_data
+ref_data_trans
+ref_data
+translation
+input_data
+input_data_trans
+processed_data
+forwardsimulationEXAMPLEBUGFIXFeb15.py
+.gitignore
+.pydevproject
+ceu.haps.long
+yri.haps.long
+test*
+snpinfo1
+haplotypes*

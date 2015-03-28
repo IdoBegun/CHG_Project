@@ -27,8 +27,8 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
     expectedRecomb = pow(10, 8)/numGen
     maxWindowLen = expectedRecomb/recombFact
     res = []
-    winLD = load_LD_windows(inDir, hapData, epsilon, minInd)
-    offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount) 
+    winLD = load_LD_ind_windows(inDir, hapData)
+    offsets = get_snp_offsets(chrom) 
 
     for [winLDStart, winLDEnd] in winLD:
         posStart = winLDStart
@@ -305,7 +305,7 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
         LDSnps.append(splitLine[0])
     
     hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
-    offsets = get_snp_offsets(snpDataDirectory, chrom, snpCount)
+    offsets = get_snp_offsets(chrom)
 
     alleleFreq = compute_allele_frequencies(hapData)    
     genVec = []

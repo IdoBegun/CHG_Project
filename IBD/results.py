@@ -1,5 +1,7 @@
 import sys, subprocess
-from global_params import DEBUG
+import global_params
+ 
+from reference_data import get_snp_offsets
 
 ################################################################################
 #                              read_ibd_results                                #
@@ -35,35 +37,35 @@ def read_ibd_results(inputDir, chrom):
 #                                 compute_ibd                                  #
 ################################################################################
 
-def compute_ibd(executableName, workingDir, chrom, numWindows, numHaps, \
-                epsilon, blockSize, threshold, maxDiff):
+def compute_ibd(workingDir, chrom, numWindows, numHaps):
     '''
     Input:
-    executableName - Name of the executable to run
     workingDir - Path of the working directory
     chrom - Chromosome number
     numWindows - Number of windows in the relevant chromosome
     numHaps - Number of haplotypes
-    epsilon - Error estimation
-    blockSize - Number of blocks in a window
-    threshold - Threshold for the block score
-    maxDiff - Maximum difference between IBD in two populations
 
     Output:
     None.
     '''
 
-    command = executableName + ' ' + str(DEBUG) + ' ' + workingDir + ' ' + \
-                str(chrom) + ' ' + str(numWindows) + str(numHaps) + ' ' + \
-                str(epsilon) + ' ' + str(blockSize) + str(threshold) + ' ' + \
-                str(maxDiff)
+    command = global_params.ibdExe + ' ' + \
+                str(global_params.DEBUG) + ' ' + \
+                workingDir + ' ' + \
+                str(chrom) + ' ' + \
+                str(numWindows) + ' ' + \
+                str(numHaps) + ' ' + \
+                str(global_params.ibdEpsilon) + ' ' + \
+                str(global_params.blockSize) + ' ' + \
+                str(global_params.ibdThreshold) + ' ' + \
+                str(global_params.maxDiff)
     
-    if DEBUG:
-        print "--> --> Executing:" + command
+    if global_params.DEBUG:
+        print "    --> Executing:" + command
     
     output = subprocess.check_output(command, shell=True)
     
-    print "--> --> Done."
+    print "    --> Done."
     
     if output:
         print output
@@ -72,15 +74,13 @@ def compute_ibd(executableName, workingDir, chrom, numWindows, numHaps, \
 #                              process_results                                 #
 ################################################################################
 
-#TODO: unused?
-def process_results(resList, chrom, personList, windowList, windowPerBlock):
+def process_results(resList, chrom, personList, windowList):
     '''
     Input:
     resList - 2d list. 1st index is the block number, 2nd index is
         the number of pairs who have IBD in said block
     chrom - Chromosome number
     personList - Person list
-    windowPerBlock - Number of windows per block
 
     Output:
     A 3d list:
@@ -92,6 +92,7 @@ def process_results(resList, chrom, personList, windowList, windowPerBlock):
     indices
     '''
     numPersons = len(personList)
+    offsets = get_snp_offsets(chrom)
     
     ibdBlocks = [[[] for x in range(numPersons)] for y in range(numPersons)]
     
@@ -117,19 +118,17 @@ def process_results(resList, chrom, personList, windowList, windowPerBlock):
                         start = block
                         end = start
                 
-                # The following should append the SNPs offsets instead of
-                # the block indices!
-                startOffset = windowList[start][0]
-                endOffset = windowList[end + windowPerBlock][1]
+                startOffset = offsets[windowList[start][0]]
+                endOffset = offsets[windowList[end + global_params.blockSize][1]]
                 res[person1][person2].append((startOffset, endOffset))
     
     return res
 
 ################################################################################
-#                              export_restuls                                  #
+#                              export_results                                  #
 ################################################################################
 
-def export_restuls(fileHandle, chrom, personList, ibdList):
+def export_results(fileHandle, chrom, personList, ibdList):
     '''
     Input:
     fileHandle - File handle to the file to write the results in
@@ -143,8 +142,8 @@ def export_restuls(fileHandle, chrom, personList, ibdList):
     
     numPersons = len(personList)
     
-    for i in range(personList):
-        for j in range(personList):
+    for i in range(numPersons):
+        for j in range(numPersons):
             if ibdList[i][j]:
                 personName1 = personList[i]
                 personName2 = personList[j]
@@ -154,4 +153,4 @@ def export_restuls(fileHandle, chrom, personList, ibdList):
                                 str(chrom) + '\t' + str(pair[1]) + '\n'
                     
                     fileHandle.write(resString)
-     
+    

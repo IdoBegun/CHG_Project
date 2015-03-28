@@ -1,27 +1,38 @@
-from global_params import numChrom
+import os
+import global_params
+import simulator_data
 
 ################################################################################
 #                             count_snps_in_chrom                              #
 ################################################################################
 
-def count_snps_in_chrom(inputDir):
+def count_snps_in_chrom():
     '''
     Input:
-    inputDir - Name of the directory containing SNP data files for
-                each chromosome
+    None
 
     Output:
     A list containing the number of SNPs in each chromosome
     '''
-
-    res = [0 for x in range(numChrom)]
-    for chrom in range(numChrom):
-        filename = inputDir + "/chrom_" + str(chrom + 1)
-        fileHandle = open(filename,'r')
-        while fileHandle.readline():
-            res[chrom] += 1
+    
+    dirName = global_params.snpDataDirectory
+    if not os.path.exists(dirName):
+        os.makedirs(dirName)
+        print "    --> Processing SNP data..."
+        res = simulator_data.simplify_snp_data()
+        print "    --> Done"
+    else:
+        print "    --> SNP data already processed, loading..."
+        res = [0 for x in range(global_params.numChrom)]
+        for chrom in range(global_params.numChrom):
+            filename = dirName + '/' + global_params.snpDataPrefix + \
+                         + str(chrom + 1)
+            fileHandle = open(filename,'r')
+            while fileHandle.readline():
+                res[chrom] += 1
         
-        fileHandle.close()
+            fileHandle.close()
+        print "    --> Done"
         
     return res
 

@@ -2,11 +2,11 @@
 
 import os, subprocess
 
+import IBD.global_params
 from IBD.reference_data import *
 from IBD.simulator_data import *
 from IBD.translator import *
 from IBD.common import *
-from IBD.global_params import *
 from IBD.phase import *
 from IBD.results import *
 
@@ -14,143 +14,116 @@ from IBD.results import *
 #                                    MAIN                                      #
 ################################################################################
 
-#TODO: Read input parameters according to the project document
-# TODO - change some functions to compute/load - call compute if needed from load instead of compute if needed and then load
+if len(sys.argv) != 4:
+    print "Usage: %s <input file number> <population1 name> <population2 name>\n" \
+            "<input file number> - the suffix of the haplotypes, snpinfo\n" \
+            "and pedigree file names\n" \
+            "<population name> = population name (such as ceu, yri)\n"
+    sys.exit()
 
-if chromsToCompute == 0:
-    chromsToCompute = numChrom
+global_params.inputFileNumber = sys.argv[1]
+global_params.populationNames = sys.argv[2:]
+
+
+if global_params.chromsToCompute == 0:
+    global_params.chromsToCompute = global_params.numChrom
 
 print "################################################################################"
 print "Phase %s: Preprocessing reference data files" % phase
 ''
-print "--> Loading SNP data..." ,
-if os.path.exists(snpDataDirectory):
-    print "Skipping"
-else:
-    simplify_snp_data(snpInfoFile, snpDataDirectory)
-    print "Done"
+print "--> Loading SNP data..."
+snpCount = count_snps_in_chrom()
+print "--> Done\n"
 
-snpCount = count_snps_in_chrom(snpDataDirectory)
 
-print "--> Simplfying reference data...",
+print "--> Simplfying reference data..."
 if os.path.exists(refDataDirectory):
-    print "Skipping"
+    print "    --> Reference data already simplfied, skipping"
 else:
-    print "\n--> Simplfying European reference data..."
-    simplify_ref_data(ceuFile, snpCount, refDataDirectory)
-    if not DEBUG:
-        print "\nDone"
-    print "--> Simplfying African reference data..."
-    simplify_ref_data(yriFile, snpCount, refDataDirectory)
-    if not DEBUG:
-        print "\nDone"
-
-print "--> Creating translation dictionary..." ,
-if os.path.exists(translationDirectory):
-    print "Skipping"
-else:
-    for i in range(numChrom):
-        if DEBUG:
-            print "--> --> Translating reference data for chromosome "\
-            "%s/%s..." % (i+1, numChrom) ,
-        create_translator(refDataDirectory, translationDirectory, snpCount, \
-                          populationNames, i + 1)
-        if DEBUG:
-            print "Done."
-    if not DEBUG:
-        print "\nDone"
+    for popName in global_params.populationNames:
+        print "    --> Simplfying reference data for population %s..." \
+                % popName
+        simplify_ref_data(popName)
+        print "    --> Done"
+print "--> Done\n"
 
 print "--> Translating reference data...", 
 if os.path.exists(translatedRefDataDirecotry):
     print "Skipping"
 else:
     for i in range(chromsToCompute):
-        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount, \
-                                            i + 1)
-        if DEBUG:
-            print "--> --> Translating reference data for chromosome "\
-                    "%s/%s..." % (i+1, numChrom) ,
+        hapDict = load_trans_dictionary_hap(i + 1)
         for name in populationNames:
-            translate_ref_data(refDataDirectory, translatedRefDataDirecotry, \
-                               hapDict, name, i + 1)
-        if DEBUG:
-            print "Done."
-    if not DEBUG:  
-        print "\nDone"    
+            translate_ref_data(hapDict, name, i + 1)    
+print "--> Done"
 
-
-phase += 1   
-
-print "################################################################################"
-print "Phase %s: Preprocessing reference data files" % phase
 
 if not os.path.exists(processedDataDirectory):
     os.makedirs(processedDataDirectory)
 
-
-print "--> Creating LD windows..."
+print "--> Creating LD independent windows..."
 for chrom in range(chromsToCompute):
     chromProcessedDirectory = processedDataDirectory + '/' + str(chrom + 1)
-    print "--> --> Creating windows for chromosome %s..." % (chrom + 1),
+    print "    --> Creating LD independent windows for chromosome %s..." \
+            "" % (chrom + 1)
     if os.path.exists(chromProcessedDirectory):
-        print "Skipping"
+        print "    --> LD independent windows already created, skipping"
     else:
-        print ""
         os.makedirs(chromProcessedDirectory)
         hapData = []
-        for name in populationNames:
+        for name in global_params.populationNames:
             filename = translatedRefDataDirecotry + '/' + name + '_' + \
                         str(chrom + 1)
             refHaps = read_translated_chrom_data(filename)
             hapData.append(refHaps)
             
-        ld_windows = load_LD_windows(chromProcessedDirectory, hapData, \
-                                     indEpsilon, minInd)
+        ld_windows = load_LD_ind_windows(chromProcessedDirectory, hapData)
+print "--> Done"
     
-phase += 1   
+global_params.phase += 1   
 
 print "################################################################################"
 print "Phase %s: Preprocessing simulated data files" % phase
 
-print "--> Preprocessing input data...",
+print "--> Preprocessing input data..."
 if os.path.exists(inputDataDirectory):
-    print "Skipping"
+    print "    --> Input data already preprocessed, skipping"
 else:
-    simplify_input_data(inputDataFile, snpCount, inputDataDirectory)
-    if not DEBUG:
-        print "\nDone."
+    simplify_input_data()
 
-print "--> Translating input data..." ,
-if os.path.exists(translatedInputDataDirecotry):
-    print "Skipping"
+print "--> Done"
+
+print "--> Translating input data..."
+if os.path.exists(global_params.translatedInputDataDirecotry):
+    print "--> Input data already translated, skipping"
 else:
     for i in range(chromsToCompute):
-        hapDict = load_trans_dictionary_hap(translationDirectory, snpCount, \
-                                            i + 1)
+        print "    --> Translating input data for chromosome %s..." \
+                "" % str(chrom)
+        hapDict = load_trans_dictionary_hap(i + 1)
         genDict = load_trans_dictionary_gen(hapDict)
-        translate_input_data(inputDataDirectory, \
-                             translatedInputDataDirecotry, i + 1, genDict)
-        
-    print "Done"
+        translate_input_data(i + 1, genDict)
+        print "    --> Done"
+print "--> Done"        
 
-personList = load_person_list(inputDataDirectory, personListFilename)
-phase += 1
+global_params.phase += 1
 
 print "################################################################################"
 print "Phase %s: Phasing simulated data" % phase
 
-numGeneration = initNumGen
+numGeneration = global_params.initNumGen
 for chrom in range(chromsToCompute):
     #get hapData
-    chromProcessedDirectory = processedDataDirectory + '/' + str(chrom + 1)
+    chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
+                                str(chrom + 1)
     if not os.path.exists(chromProcessedDirectory):
         print "Error: Directory %s does not exist" % (chromProcessedDirectory)
         sys.exit();
 
     hapData = []
     for name in populationNames:
-        filename = translatedRefDataDirecotry + '/' + name + '_' + \
-                    str(chrom + 1)
+        filename = global_params.translatedRefDataDirecotry + '/' + name + \
+                    '_' + str(chrom + 1)
         refHaps = read_translated_chrom_data(filename)
         hapData.append(refHaps)
     # divide to windows
@@ -158,25 +131,37 @@ for chrom in range(chromsToCompute):
         print "--> --> compute_windows: Started for chromosome %s..." \
                 "" % (chrom + 1)
 
-    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, minInd, snpCount, \
-                                 chromProcessedDirectory, windowListFile)
+    windowList = compute_windows(chromProcessedDirectory, hapData, \
+                                 global_params.beagleEpsilon, numGeneration, \
+                                 chrom + 1, global_params.minInd, \
+                                 global_params.snpCount, \
+                                 chromProcessedDirectory, \
+                                 global_params.windowListFile)
     
     load_ref_data_windows(hapData, chrom + 1, windowList, \
-                          phasedDirectory)
+                          global_params.phasedDirectory)
     create_beagle_ref_data(hapData, chrom + 1, windowList, \
-                           beaglePhaseDirectory, beagleRefFile)
-    filename = translatedInputDataDirecotry + '/' + 'chrom_' + str(chrom + 1)
+                           global_params.beaglePhaseDirectory, \
+                           global_params.beagleRefFile)
+    filename = translatedInputDataDirecotry + '/' + \
+                global_params.translatedDataPrefix + str(chrom + 1)
     genData = read_translated_chrom_data(filename)
     create_beagle_sim_data(genData, chrom + 1, windowList, \
-                           beaglePhaseDirectory, beagleGenFile)
+                           global_params.beaglePhaseDirectory, \
+                           global_params.beagleGenFile)
 
     nWindows = len(windowList)
     for iWindow in range(nWindows):
-        winPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleGenFile + str(iWindow) + '.vcf.gz'
-        refPath = beaglePhaseDirectory + '/' + str(chrom + 1) + '/' + beagleRefFile + str(iWindow) + '.vcf'
-        outputPath = phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0/win' + str(iWindow)
-        command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + ' ref=' + refPath + ' out=' + outputPath
+        winPath = global_params.beaglePhaseDirectory + '/' + str(chrom + 1) + \
+                    '/' + global_params.beagleGenFile + str(iWindow) + \
+                    '.vcf.gz'
+        refPath = global_params.beaglePhaseDirectory + '/' + \
+                    str(chrom + 1) + '/' + global_params.beagleRefFile + \
+                    str(iWindow) + '.vcf'
+        outputPath = global_params.phasedDirectory + '/chrom' + \
+                        str(chrom + 1) + '/pop0/win' + str(iWindow)
+        command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
+                    ' ref=' + refPath + ' out=' + outputPath
         
         output = subprocess.check_output(command, shell=True)
         if output:
@@ -189,60 +174,61 @@ for chrom in range(chromsToCompute):
             print output
 
     load_beagle_phased_data(chrom, windowList, inDir, inFile, \
-                            phasedDirectory, phasedWindowFile, \
+                            global_params.phasedDirectory, \
+                            global_params.phasedWindowFile, \
                             chromProcessedDirectory)
 
     if chrom == 0:
         # update the number of generations according to the first chromosome
-        numGeneration = compute_generation(chrom + 1, populationNames, snpCount, chromProcessedDirectory, translatedRefDataDirecotry)
+        numGeneration = compute_generation(chrom + 1, \
+                                           global_params.populationNames, \
+                                           global_params.snpCount, \
+                                           chromProcessedDirectory, \
+                                           global_params.translatedRefDataDirecotry)
 
 
-phase += 1
+global_params.phase += 1
 
 print "################################################################################"
 print "Phase %s: Computing IBD" % phase
 
 workingDir = os.getcwd() + "/" + beaglePhaseDirectory + "/"
-personList = read_person_list_file(inputDataDirectory)
+personList = read_person_list_file()
 numHaps = len(personList) * 2  
 
 for chrom in range(chromsToCompute):
     print "--> Computing IBD for chromosome %s..." % (chrom + 1)
-    # TODO: Need a function to read the data saved instead of computing it again! - do it in each compute_windows call
-    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, snpCount, \
-                                 chromProcessedDirectory, windowListFile)
+    chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
+                                str(chrom + 1)
+    windowList = read_windows(chromProcessedDirectory, windowListFile)
     
     numWindows = len(windowList)
     
-    compute_ibd(ibdExe, workingDir, chrom, numWindows, numHaps, \
-                ibdEpsilon, blockSize, ibdThreshold, maxDiff)
+    compute_ibd(global_params.ibdExe, workingDir, chrom, numWindows, numHaps)
 
-phase += 1
+global_params.phase += 1
 
 print "################################################################################"
 print "Phase %s: Exporting results" % phase
 
-# TODO - update the fileName variable
-resultsFileHandle = open(fileName, 'w')
+resultsFileHandle = open(global_params.outputDataFilePrefix + \
+                         global_params.inputFileNumber, 'w')
 header = "name1\tname2\tchr_start\tstart\tchr_end\tend\n"
 resultsFileHandle.write(header)
 
 for chrom in range(chromsToCompute):
-    # TODO: Need a function to read the data saved instead of computing it again!
-    windowList = compute_windows(chromProcessedDirectory, hapData, beagleEpsilon, \
-                                 numGeneration, chrom + 1, minInd, \
-                                 chromProcessedDirectory, windowListFile)
+    chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
+                                str(chrom + 1)
+    windowList = read_windows(chromProcessedDirectory, \
+                              global_params.windowListFile)
     
-    # TODO: match number of parameters
-    results = read_ibd_results(beaglePhaseDirectory, chrom + 1, personList, \
-                               windowList, blockSize)
-    # TODO: less ugly
-    export_restuls(resultsFileHandle, chrom, personList, results)
+    fileResults = read_ibd_results(beaglePhaseDirectory, chrom + 1)
+    ibdResults = process_results(fileResults, chrom, personList, windowList)
+    export_results(resultsFileHandle, chrom, personList, ibdResults)
     
 
 resultsFileHandle.close()
 
-phase += 1
+global_params.phase += 1
 
 print "################################################################################"

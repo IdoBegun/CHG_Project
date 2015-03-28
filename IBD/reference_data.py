@@ -1,20 +1,19 @@
 # This file contains functions relevant only to the reference data
 
 import os, sys
-from global_params import numChrom
+import global_params
 from common import compute_allele_correlation, compute_allele_frequencies
 
+DEBUG = global_params.DEBUG
 
 ################################################################################
 #                              simplify_ref_data                               #
 ################################################################################
 
-def simplify_ref_data(filename, snpCount, outDir):
+def simplify_ref_data(popName):
     '''
     Input:
-    filename - Name of the file containing haplotypes reference data
-    snpCount - A list of number of SNPs per chromosome
-    outDir - Name of the directory which will contain all output files
+    popName - Name of the population
     
     Output:
     None - fills outDir with files in the format of:
@@ -23,11 +22,12 @@ def simplify_ref_data(filename, snpCount, outDir):
                     represents a different person
     
     '''
+    outDir = global_params.refDataDirectory
     if not os.path.exists(outDir):
         os.makedirs(outDir)
     
+    filename = popName + global_params.populationFilenameSuffix
     fileHandle = open(filename, 'r')
-    populationName = filename.split('.')[0]
     firstLine = fileHandle.readline().split()
     numHaps = len(firstLine) - 3
     chrom = 1
@@ -48,16 +48,18 @@ def simplify_ref_data(filename, snpCount, outDir):
         for i in range(numHaps):
             data[i].append(splitLine[i + 3])
         
-        if count == snpCount[chrom - 1]:
-            outFileName = populationName + "_" + str(chrom)
+        if count == global_params.snpCount[chrom - 1]:
+            outFileName = popName + "_" + str(chrom)
             outputFileHandle = open(outDir + "/" + outFileName, 'w');
             for hap in data:
                 outputFileHandle.write(' '.join(hap) + '\n')
             outputFileHandle.close()
-            if chrom != 1:
-                print "Done."
-            print "--> --> simplify_ref_data: Started reading data for "\
-                    "chromosome %s/%s..." % (chrom, numChrom),
+            if DEBUG:
+                if chrom != 1:
+                    print "Done."
+                print "--> --> simplify_ref_data: Started reading data for " \
+                        "chromosome %s/%s..."  \
+                        "" % (chrom, global_params.numChrom),
             chrom += 1
             count = 0
             del data
@@ -67,15 +69,12 @@ def simplify_ref_data(filename, snpCount, outDir):
     fileHandle.close()
 
 ################################################################################
-#                               compute_LD_windows                             #
+#                             compute_LD_ind_windows                           #
 ################################################################################
-#TODO: change function name to LD_independent_windows - do it also for load_LD, ...
-def compute_LD_windows(hapData, epsilon, minInd):
+def compute_LD_ind_windows(hapData):
     '''
     Input:
     hapData - A list of haplotypa data (strings)
-    epsilon - Maximum threshold for LD score
-    minInd - Minimum number of SNPs in each window
     
     Output:
     A list containing windows in which both start and end indices have LD
@@ -92,7 +91,7 @@ def compute_LD_windows(hapData, epsilon, minInd):
     j = 1
     while (j < hapLen):
         viable = True
-        if (((j - 1) - i + 1) < minInd):
+        if (((j - 1) - i + 1) < global_params.minInd):
             j += 1
             continue
 
@@ -101,11 +100,13 @@ def compute_LD_windows(hapData, epsilon, minInd):
         
             D = abs(alleleCorr - (alleleFreqs[k][i] * alleleFreqs[k][j]))
             
-            if (D > epsilon):
+            if (D > global_params.indEpsilon):
                 viable = False
                 break
             
         if viable:
+            if global_params.DEBUG:
+                print "        --> Adding window %s-%s" % (str(i), str(j - 1))
             res.append([i,j - 1])
             i = j
             j = i + 1
@@ -116,17 +117,16 @@ def compute_LD_windows(hapData, epsilon, minInd):
         res.append([i, j - 1])
     
     # In case the last window is smaller than minInd, merge last two windows
-    if ((res[-1][1] - res[-1][0] + 1) < minInd):
+    if ((res[-1][1] - res[-1][0] + 1) < global_params.minInd):
         res[-2][1] = res[-1][1]
         res = res[:-1]
     
     return res
     
 ################################################################################
-#                                 load_LD_windows                               #
+#                               load_LD_ind_windows                            #
 ################################################################################
-# TODO - change the function name to something with independent
-def load_LD_windows(directory, hapData, epsilon, minInd):
+def load_LD_ind_windows(directory, hapData):
     '''
     Input:
     directory - Directory to save the data to or load from
@@ -138,19 +138,19 @@ def load_LD_windows(directory, hapData, epsilon, minInd):
     List of LD windows. The list is loaded from a file if it exists, otherwise
     the file is created
     '''
-    print "--> --> --> Computing LD windows...",
     filename = directory + '/ld_windows'
     if not os.path.exists(filename):
-        res = compute_LD_windows(hapData, epsilon, minInd)
+        print "    --> Computing LD windows..."
+        res = compute_LD_ind_windows(hapData)
         
         fileHandle = open(filename, 'w')
         for window in res:
             fileHandle.write(str(window[0]) + ' ' + str(window[1]) + '\n')
             
         fileHandle.close()
-        print "Done"
     
     else:
+        print "    --> LD independent windows already computed, loading..."
         res = []
         fileHandle = open(filename, 'r')
         
@@ -160,27 +160,26 @@ def load_LD_windows(directory, hapData, epsilon, minInd):
             end = int(splitLine[1])
             res.append((start, end))
         
-        print "Skipping"
-    
+    print "    --> Done"
     return res
     
 ################################################################################
 #                               get_snp_offsets                                #
 ################################################################################
 
-def get_snp_offsets(inputDir, chrom, snpCount):
+def get_snp_offsets(chrom):
     '''
     Input:
     inputDir - Name of the directory containing SNP data files
     chrom - Chromosome number
-    snpCount - A list containing how many SNPs are in each chromosome
 
     Output:
     A list containing the offset of each SNPs in the given chromosome
     '''
     
-    fileHandle = open(inputDir + "/chrom_" + str(chrom),'r')
-    res = [0 for x in range(snpCount[chrom - 1])]
+    fileHandle = open(global_params.snpDataDirectory + '/' + \
+                      global_params.snpDataPrefix + str(chrom),'r')
+    res = [0 for x in range(global_params.snpCount[chrom - 1])]
     count = 0
     
     for line in fileHandle:

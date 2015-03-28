@@ -5,34 +5,43 @@
 # Total number of chromosomes
 numChrom = 22
 
+# Suffix for input/output files (haplotypes, snpinfo, ibdresults)
+inputFileNumber = "0"
+
 # Filename of a person list from the input data
 personListFilename = "personList"
 
 # Reference data files
+populationFilenameSuffix = ".haps.long"
 ceuFile = "ceu.haps.long"
 yriFile = "yri.haps.long"
-populationNames = ["ceu", "yri"]
+populationNames = []
 
 # Input data files
-snpInfoFile = "snpinfo1"
-inputDataFile = "haplotypes1"
+snpInfoFilePrefix = "snpinfo"
+inputDataFilePrefix = "haplotypes"
 
 # Output file
-outputDataFile = "ibdresults1"
+outputDataFilePrefix = "ibdresults1"
 
 # Directories
 # Directory of the simplified simulator data
 inputDataDirectory = "input_data"
+inputDataPrefix = "chrom_"
 # Directory of the simplified reference data
 refDataDirectory = "ref_data"
 # Directory of the simplified SNP info
 snpDataDirectory = "snp_data"
+snpDataPrefix = "chrom_"
 # Directory of the translator
 translationDirectory = "translation"
+translationaPrefix = "chrom_"
 # Directory of the translated reference data
 translatedRefDataDirecotry = "ref_data_trans"
 # Directory of the translated simulator data
 translatedInputDataDirecotry = "input_data_trans"
+# Prefix for translated data files
+translatedDataPrefix = "chrom_"
 # Directory of the processesed data
 processedDataDirectory = "processed_data"
 # file prefix used for beagle phase input files
@@ -87,6 +96,9 @@ ibdThreshold = 0.8
 maxDiff = 0.3
 
 phase = 1
+
+# A list containing the number of SNPs in each chromosome
+snpCount = []
 
 # Debug
 DEBUG = True

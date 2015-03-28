@@ -1,37 +1,40 @@
 import os, sys
 
+import global_params
+
 ################################################################################
 #                              create_translator                               #
 ################################################################################
 
-def create_translator(inputDir, outputDir, snpCount, populationNames, chrom):
+def create_translator(chrom):
     '''
     Input:
-    inputDir - Name of directory containing haplotypes reference data in files
-                named <population_name>_<chromosome number>
-    outputDir - Name of directory to store the translator data
-    snpCount - A list of number of SNPs per chromosome
-    populationNames - List containing names of populations
     chrom - Chromosome number
     
     Output:
-    None- creates a file named chrom_<chrom> which contains all possible values
-            for a SNP in the given chromosome. The first value will be
-            translated as 0, and the second as 1
+    A list of dictionaries - each entry represents a SNP
+    
+    Note:
+    Creates a file named chrom_<chrom> which contains all possible values
+    for a SNP in the given chromosome. The first value will be
+    translated as 0, and the second as 1
     '''
     
-    hap = [[] for y in range(snpCount[chrom - 1])]
+    hap = [[] for y in range(global_params.snpCount[chrom - 1])]
+    res = [dict() for y in range(global_params.snpCount[chrom - 1])]
     
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    dirName = global_params.translationDirectory
+    if not os.path.exists(dirName):
+        os.makedirs(dirName)
     
-    outputFilename = outputDir + '/chrom_' + str(chrom)
+    outputFilename = dirName + '/' + global_params.translationaPrefix + \
+                        str(chrom)
     
-    for name in populationNames:
-        inputFilename = inputDir + '/' + name + '_' + str(chrom)
+    for name in global_params.populationNames:
+        inputFilename = global_params.inputDataDirectory + '/' + name + '_' + \
+                        str(chrom)
         fileHandle = open(inputFilename,'r')
         
-        # TODO: Do we have a more efficient way of finding unique entries?
         for line in fileHandle:
             splitLine = line.split()
             for i in range(len(splitLine)): #len(splitLine) = numOfSNPs
@@ -48,19 +51,22 @@ def create_translator(inputDir, outputDir, snpCount, populationNames, chrom):
                     "more than 2 possible values: %s" % (i + 1, chrom, hap[i])
             sys.exit();
         
+        zippedVals = zip(hap[i], range(len(hap[i])))
+        for key,val in zippedVals:
+            res[i][key] = val
+        
         outputFileHandle.write(' '.join(hap[i]) + '\n')
-    
+        
     outputFileHandle.close()
+    return res
 
 ################################################################################
 #                         load_trans_dictionary_hap                            #
 ################################################################################
 
-def load_trans_dictionary_hap(transDir, snpCount, chrom):
+def load_trans_dictionary_hap(chrom):
     '''
     Input:
-    transDir - Name of the directory containing all translation dictionaries
-    snpCount - A list of number of SNPs per chromosome
     chrom - Chromosome number
     
     Output:
@@ -71,20 +77,29 @@ def load_trans_dictionary_hap(transDir, snpCount, chrom):
     Output should be in the form of:
     [{'A':0, 'C':1}, {'G':0, 'T':1}]
     '''
+    filename = global_params.translationDirectory + '/' + \
+                global_params.translationaPrefix + str(chrom)
     
-    inputFilename = transDir + '/chrom_' + str(chrom)
-    res = [dict() for y in range(snpCount[chrom - 1])]
-    count = 0
+    if not os.path.exists(filename):
+        print "    --> Creating translator for chromosome %s..." % str(chrom)
+        res = create_translator(chrom)
+        print "    --> Done"
+    else:
+        print "    --> Translator for chromosome %s already exists, " \
+                "loading..." % str(chrom)
+        res = [dict() for y in range(global_params.snpCount[chrom - 1])]
+        count = 0
     
-    fileHandle = open(inputFilename,'r')
-    for line in fileHandle:
-        hapVals = line.split()
-        zippedVals = zip(hapVals, range(len(hapVals)))
+        fileHandle = open(filename,'r')
+        for line in fileHandle:
+            hapVals = line.split()
+            zippedVals = zip(hapVals, range(len(hapVals)))
         
-        for key,val in zippedVals:
-            res[count][key] = val
+            for key,val in zippedVals:
+                res[count][key] = val
         
-        count += 1
+            count += 1
+        print "    --> Done"
     
     return res
 
@@ -104,6 +119,10 @@ def load_trans_dictionary_gen(hapDict):
     
     Note:
     Some dictionaries may contain a single value.
+    
+    Note:
+    Output should be in the form of:
+    [{'AA':0, 'AC':1, 'CA':1, 'CC':2}]
     '''
     
     length = len(hapDict)
@@ -120,12 +139,9 @@ def load_trans_dictionary_gen(hapDict):
 #                             translate_ref_data                               #
 ################################################################################
 
-def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
+def translate_ref_data(hapDict, populationName, chrom):
     '''
     Input:
-    inputDir - Name of directory containing haplotypes reference data in files
-                named <population_name>_<chromosome number>
-    outputDir - Name of directory to store the translated data
     hapDict - List of dictionaries, containing translations to each SNP
     populationName - Population name
     chrom - Chromosome number
@@ -135,6 +151,10 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
             in which the data is translated according to hapDict
     '''
     
+    print "    --> Translation reference data for chromosome %s for " \
+            "population %s..." % (str(chrom), populationName)
+    inputDir = global_params.refDataDirectory
+    outputDir = global_params.translatedRefDataDirecotry
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     
@@ -155,17 +175,17 @@ def translate_ref_data(inputDir, outputDir, hapDict, populationName, chrom):
         outputFileHandle.write('\n')    
             
     inputFileHandle.close()
-    outputFileHandle.close()  
+    outputFileHandle.close()
+    
+    print "    --> Done"
 
 ################################################################################
 #                            translate_input_data                              #
 ################################################################################
 
-def translate_input_data(inputDir, outputDir, chrom, genDict):
+def translate_input_data(chrom, genDict):
     '''
     Input:
-    inputDir - Name of directory containing genotype input data
-    outputDir - Name of directory to store the translated data
     chrom - Chromosome number
     genDict - Genotype translation dictionary
     
@@ -173,13 +193,15 @@ def translate_input_data(inputDir, outputDir, chrom, genDict):
     None- creates a file identical to the original file, where all the genotype
             data is translated according to genDict
     '''
+    inputDir = global_params.inputDataDirectory
+    outputDir = global_params.translatedInputDataDirecotry
     
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     
-    filename = "chrom_" + str(chrom)
-    inputFilename = inputDir + '/' + filename
-    outputFilename = outputDir + '/' + filename
+    inputFilename = inputDir + '/' + global_params.inputDataPrefix + str(chrom)   
+    outputFilename = outputDir + '/' + global_params.translatedDataPrefix + \
+                        str(chrom)
     inputFileHandle = open(inputFilename, 'r')
     outputFileHandle = open(outputFilename, 'w')
     
