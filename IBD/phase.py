@@ -108,7 +108,8 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
             if DEBUG:
                     print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
 
-            outputPath = fullOutDir + '/win' + str(iWindow) + '.txt'
+            outputPath = fullOutDir + '/win' + str(iWindow)
+
             outFileHandler = open(outputPath, 'w')
             [winStart, winEnd] = windowList[iWindow]
             nHaps = len(hapData[pop])
@@ -277,7 +278,7 @@ def load_beagle_phased_data(chrom, windowList, inDir, outDir):
                 
             lineCounter = lineCounter + 1
    
-        outPath = outDir + 'win' + str(iWindow) + '.txt'
+        outPath = outDir + 'win' + str(iWindow)
         outputFileHandler = open(outPath, 'w')
         nHaplotypes = len(hapData[0])
         nSnps = len(hapData)
