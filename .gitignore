@@ -59,3 +59,8 @@ yri.haps.long
 test*
 snpinfo1
 haplotypes*
+*.txt
+beagle_phase
+updated
+pedigree*
+*.jar

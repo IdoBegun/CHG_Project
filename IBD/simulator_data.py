@@ -1,6 +1,6 @@
 import os, string, sys
 import global_params
-from common import compute_allele_correlation, compute_allele_frequencies
+from common import *
 from math import log
 
 ################################################################################

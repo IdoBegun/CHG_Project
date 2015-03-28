@@ -35,14 +35,15 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
         posEnd = posStart + 1
         while (posEnd <= winLDEnd):
             while ((posEnd - posStart) < maxWindowSNPs ) and \
-                  (offsets[posEnd] - offsets[posStart] <= maxWindowLen) and \
-                  (posEnd <= winLDEnd):
+                  (posEnd <= winLDEnd) and \
+                  (offsets[posEnd] - offsets[posStart] <= maxWindowLen):
                 posEnd += 1
             res.append([posStart, posEnd - 1])
             posStart = posEnd
             posEnd = posStart + 1
         res[-1][1] = winLDEnd
-        if (res[-1][1] - res[-1][0] < minInd):
+    
+        if (res[-1][1] - res[-1][0] < minInd) and (len(res) > 2):
             res[-2][1] = winLDEnd
             res = res[:-1]
         
@@ -97,12 +98,17 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
     '''
     
     nPop = len(hapData)
+    
     for pop in range(nPop):
+        fullOutDir = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1)
+        if not os.path.exists(fullOutDir):
+            os.makedirs(fullOutDir)
+            
         for iWindow in range(len(windowList)):
             if DEBUG:
                     print "--> --> load_ref_data_windows: creating file for window %s (pop %s)..." % (iWindow, pop + 1)
 
-            outputPath = outDir + '/chrom' + str(chrom) + '/pop' + str(pop + 1) + '/win' + str(iWindow) + '.txt'
+            outputPath = fullOutDir + '/win' + str(iWindow) + '.txt'
             outFileHandler = open(outputPath, 'w')
             [winStart, winEnd] = windowList[iWindow]
             nHaps = len(hapData[pop])
@@ -154,7 +160,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
         for iSnp in range(hapLen):
         # snpName = snpLocation since we're phasing small windows
             outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
-                                    str(chrom), str(iSnp + 1), str(iSnp + 1))
+                                    (str(chrom), str(iSnp + 1), str(iSnp + 1)))
             for pop in hapData:
                 for hapNum in range(len(pop)):
                     if not hapNum % 2:

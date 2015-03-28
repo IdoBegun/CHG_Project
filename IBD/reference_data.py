@@ -2,7 +2,7 @@
 
 import os, sys
 import global_params
-from common import compute_allele_correlation, compute_allele_frequencies
+from common import *
 
 DEBUG = global_params.DEBUG
 
@@ -57,8 +57,8 @@ def simplify_ref_data(popName):
             if DEBUG:
                 if chrom != 1:
                     print "Done."
-                print "--> --> simplify_ref_data: Started reading data for " \
-                        "chromosome %s/%s..."  \
+                print "            --> simplify_ref_data: Started reading " \
+                        "data for chromosome %s/%s..."  \
                         "" % (chrom, global_params.numChrom),
             chrom += 1
             count = 0

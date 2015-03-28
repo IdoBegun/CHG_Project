@@ -31,7 +31,7 @@ def create_translator(chrom):
                         str(chrom)
     
     for name in global_params.populationNames:
-        inputFilename = global_params.inputDataDirectory + '/' + name + '_' + \
+        inputFilename = global_params.refDataDirectory + '/' + name + '_' + \
                         str(chrom)
         fileHandle = open(inputFilename,'r')
         

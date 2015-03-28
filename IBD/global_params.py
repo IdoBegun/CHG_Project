@@ -17,6 +17,11 @@ ceuFile = "ceu.haps.long"
 yriFile = "yri.haps.long"
 populationNames = []
 
+snpInfoFile = ""
+inputDataFile = ""
+populationFilenames = ""
+inputFileNumber = 0
+
 # Input data files
 snpInfoFilePrefix = "snpinfo"
 inputDataFilePrefix = "haplotypes"
@@ -65,7 +70,7 @@ initNumGen = 50
 recombFact = 10
 
 # max number of SNPs allowed in a window
-maxWindowSNPs = 20
+maxWindowSNPs = 500
 
 # Location of the IBD executable file
 ibdExe = ""
@@ -75,10 +80,10 @@ beagleExe = ""
 
 # When calculating dependencies between SNPs, this is the maximum value
 # we consider as independent
-indEpsilon = 0.00000001
+indEpsilon = 0
 
 # Minimum number of SNPs in each LD independent window (don't set to less than 3!
-minInd = 3
+minInd = 400
 
 # Epsilon used for BEAGLE
 beagleEpsilon = 0.00001

@@ -1,6 +1,6 @@
 import os
 import global_params
-import simulator_data
+from simulator_data import *
 
 ################################################################################
 #                             count_snps_in_chrom                              #
@@ -19,14 +19,14 @@ def count_snps_in_chrom():
     if not os.path.exists(dirName):
         os.makedirs(dirName)
         print "    --> Processing SNP data..."
-        res = simulator_data.simplify_snp_data()
+        res = simplify_snp_data()
         print "    --> Done"
     else:
         print "    --> SNP data already processed, loading..."
         res = [0 for x in range(global_params.numChrom)]
         for chrom in range(global_params.numChrom):
             filename = dirName + '/' + global_params.snpDataPrefix + \
-                         + str(chrom + 1)
+                         str(chrom + 1)
             fileHandle = open(filename,'r')
             while fileHandle.readline():
                 res[chrom] += 1
@@ -47,7 +47,7 @@ def read_translated_chrom_data(filename):
     
     Output:
     A list containing data from the file (haplotype or genotype data). Each
-    entry represents a different persson or haplotype
+    entry represents a different person or haplotype
     '''
     
     fileHandle = open(filename, 'r')

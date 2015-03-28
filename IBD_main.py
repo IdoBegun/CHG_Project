@@ -14,15 +14,20 @@ from IBD.results import *
 #                                    MAIN                                      #
 ################################################################################
 
-if len(sys.argv) != 4:
-    print "Usage: %s <input file number> <population1 name> <population2 name>\n" \
-            "<input file number> - the suffix of the haplotypes, snpinfo\n" \
-            "and pedigree file names\n" \
-            "<population name> = population name (such as ceu, yri)\n"
+if len(sys.argv) != 6:
+    print "Usage: %s <pedigree file> <SNP info file> <genotype data file> " \
+            "<population1 data file> <population2 data file>\n"
     sys.exit()
 
-global_params.inputFileNumber = sys.argv[1]
-global_params.populationNames = sys.argv[2:]
+global_params.snpInfoFile = sys.argv[2]
+global_params.inputDataFile = sys.argv[3]
+global_params.populationFilenames = sys.argv[4:6]
+global_params.inputFileNumber = int(global_params.snpInfoFile.split(\
+                                            global_params.snpInfoFilePrefix)[1])
+
+global_params.populationNames = [x.split(global_params.populationFilenameSuffix)[0] \
+                                 for x in global_params.populationFilenames]
+
 
 
 if global_params.chromsToCompute == 0:
@@ -32,7 +37,7 @@ print "#########################################################################
 print "Phase %s: Preprocessing reference data files" % phase
 ''
 print "--> Loading SNP data..."
-snpCount = count_snps_in_chrom()
+global_params.snpCount = count_snps_in_chrom()
 print "--> Done\n"
 
 
@@ -47,13 +52,13 @@ else:
         print "    --> Done"
 print "--> Done\n"
 
-print "--> Translating reference data...", 
+print "--> Translating reference data..."
 if os.path.exists(translatedRefDataDirecotry):
     print "Skipping"
 else:
     for i in range(chromsToCompute):
         hapDict = load_trans_dictionary_hap(i + 1)
-        for name in populationNames:
+        for name in global_params.populationNames:
             translate_ref_data(hapDict, name, i + 1)    
 print "--> Done"
 
@@ -121,9 +126,9 @@ for chrom in range(chromsToCompute):
         sys.exit();
 
     hapData = []
-    for name in populationNames:
-        filename = global_params.translatedRefDataDirecotry + '/' + name + \
-                    '_' + str(chrom + 1)
+    for name in global_params.populationNames:
+        filename = translatedRefDataDirecotry + '/' + name + '_' + \
+            str(chrom + 1)
         refHaps = read_translated_chrom_data(filename)
         hapData.append(refHaps)
     # divide to windows
