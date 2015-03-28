@@ -116,7 +116,7 @@ def load_ref_data_windows(hapData, chrom, windowList, outDir):
             for iHap in range(nHaps):
                 for iSnp in range(winStart, winEnd + 1):
                     outFileHandler.write(hapData[pop][iHap][iSnp])
-                outFileHandler.write('/n')
+                outFileHandler.write('\n')
             outFileHandler.close()
 ################################################################################
 #                            create_beagle_ref_data                            #
@@ -143,7 +143,7 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
                     print "--> --> create_beagle_ref_data: creating file for window %s..." % (iWindow)
 
         filename = outputDir + '/' + outFile + str(iWindow) + '.vcf'
-        outputFileHandler = open(filename, 'w')
+        outputFileHandler = open(filename, 'w', 10000)
         [winStart, winEnd] = windowList[iWindow]
 
         
@@ -157,8 +157,8 @@ def create_beagle_ref_data(hapData, chrom, windowList, outDir, outFile):
             outputFileHandler.write('\tPERSON' + str(iPerson + 1))
         outputFileHandler.write('\n')
 
-        hapLen = len(hapData[0][0])
-        for iSnp in range(hapLen):
+        #hapLen = len(hapData[0][0])
+        for iSnp in range(winStart, winEnd + 1):
         # snpName = snpLocation since we're phasing small windows
             outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
                                     (str(chrom), str(iSnp + 1), str(iSnp + 1)))
@@ -210,13 +210,12 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
                                 Description="Genotype">\n')
         outputFileHandler.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT')
         for iPerson in range(len(genData)):
-            outputFileHandler.write('\tPERSON' + str(iPerson + 1))
+            outputFileHandler.write('\tSIMPERSON' + str(iPerson + 1))
         outputFileHandler.write('\n')
 
-        genLen = len(genData[0])
-        for iSnp in range(genLen):
+        for iSnp in range(winStart, winEnd + 1):
             outputFileHandler.write('%s\t%s\t%s\tT\tC\t100\tPASS\t.\tGT' % \
-                                    str(chrom), str(iSnp + 1), str(iSnp + 1))
+                                    (str(chrom), str(iSnp + 1), str(iSnp + 1)))
             for gen in genData:
                 if gen[iSnp] == '0':
                     outputFileHandler.write('\t0/0')
@@ -247,7 +246,6 @@ def load_beagle_phased_data(chrom, windowList, inDir, outDir):
     Input:
     chrom - chromosome number
     windowList - list of windows dividing the chromosome to work by
-
     inDir - name of directory contains the admixture haplotype in VCF format
     outDir - name of directory to store the admixture haplotype
 
@@ -312,7 +310,8 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
         splitLine = line.split()
         LDSnps.append(splitLine[0])
     
-    hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
+    hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, \
+                           phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
     offsets = get_snp_offsets(chrom)
 
     alleleFreq = compute_allele_frequencies(hapData)    

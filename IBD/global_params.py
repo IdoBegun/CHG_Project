@@ -64,13 +64,13 @@ phasedWindowFile = 'phased_window'
 windowListFile = 'windowList'
 
 # initial number of generations
-initNumGen = 50
+initNumGen = 20
 
 # Recombination factor
 recombFact = 10
 
 # max number of SNPs allowed in a window
-maxWindowSNPs = 500
+maxWindowSNPs = 300
 
 # Location of the IBD executable file
 ibdExe = ""
@@ -83,7 +83,7 @@ beagleExe = ""
 indEpsilon = 0
 
 # Minimum number of SNPs in each LD independent window (don't set to less than 3!
-minInd = 400
+minInd = 100
 
 # Epsilon used for BEAGLE
 beagleEpsilon = 0.00001
@@ -95,7 +95,7 @@ ibdEpsilon = 0.01
 blockSize = 20
 
 # Threshold for accepting IBD
-ibdThreshold = 0.8
+ibdThreshold = 1.5
 
 # Maximum difference between IBD scores between populations
 maxDiff = 0.3

@@ -153,18 +153,22 @@ for chrom in range(chromsToCompute):
     genData = read_translated_chrom_data(filename)
     create_beagle_sim_data(genData, chrom + 1, windowList, \
                            global_params.beaglePhaseDirectory, \
-                           global_params.beagleGenFile)
+                           global_params.beagleSimFile)
+
+    outDir = global_params.phasedDirectory + '/chrom' + str(chrom + 1) + '/pop0'
+    if not os.path.exists(outDir):
+        os.makedirs(outDir)
 
     nWindows = len(windowList)
     for iWindow in range(nWindows):
         winPath = global_params.beaglePhaseDirectory + '/' + str(chrom + 1) + \
-                    '/' + global_params.beagleGenFile + str(iWindow) + \
+                    '/' + global_params.beagleSimFile + str(iWindow) + \
                     '.vcf.gz'
         refPath = global_params.beaglePhaseDirectory + '/' + \
                     str(chrom + 1) + '/' + global_params.beagleRefFile + \
                     str(iWindow) + '.vcf'
         outputPath = global_params.phasedDirectory + '/chrom' + \
-                        str(chrom + 1) + '/pop0/win' + str(iWindow) + '.vcf'
+                        str(chrom + 1) + '/pop0/win' + str(iWindow)
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
                     ' ref=' + refPath + ' out=' + outputPath
         
@@ -172,7 +176,7 @@ for chrom in range(chromsToCompute):
         if output:
             print output
         
-        command = "gunzip " + outputPath
+        command = "gunzip " + outputPath + ".vcf.gz"
         
         output = subprocess.check_output(command, shell=True)
         if output:

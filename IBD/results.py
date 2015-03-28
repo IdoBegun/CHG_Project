@@ -108,20 +108,22 @@ def process_results(resList, chrom, personList, windowList):
     for person1 in range(numPersons):
         for person2 in range(numPersons):
             if ibdBlocks[person1][person2]:
-				startBlock = ibdBlocks[person1][person2][0]
-				endBlock = startBlock
-				for block in ibdBlocks[person1][person2][1:]:
-					if block = endBlock+1:
-						endBlock = block
-					else:
-						startOffset = offsets[windowList[startBlock][0]]
-						endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
-						res[person1][person2].append((startOffset, endOffset))
-						startBlock = block
-						endBlock = block
-				startOffset = offsets[windowList[startBlock][0]]
-				endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
-				res[person1][person2].append((startOffset, endOffset))
+                startBlock = ibdBlocks[person1][person2][0]
+                endBlock = startBlock
+                for block in ibdBlocks[person1][person2][1:]:
+                    if block == endBlock+1:
+                        endBlock = block
+                    else:
+                        startOffset = offsets[windowList[startBlock][0]]
+                        endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
+                        res[person1][person2].append((startOffset, endOffset))
+                        startBlock = block
+                        endBlock = block
+        
+                startOffset = offsets[windowList[startBlock][0]]
+                endOffset = offsets[windowList[endBlock+global_params.blockSize-1][1]]
+                res[person1][person2].append((startOffset, endOffset))
+
     return res
 
 ################################################################################
