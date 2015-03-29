@@ -85,7 +85,7 @@ for chrom in range(chromsToCompute):
         ld_windows = load_LD_ind_windows(chromProcessedDirectory, hapData)
 print "--> Done"
     
-global_params.phase += 1
+global_params.phase += 1   
 
 print "################################################################################"
 print "Phase %s: Preprocessing simulated data files" % phase

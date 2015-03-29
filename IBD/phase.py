@@ -29,7 +29,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
     outputPath = outDir + '/' + str(chrom) + '/' + outFile
     if os.path.exists(outputPath):
         print "--> sub windows for chrom %s already created, skipping" % (chrom)
-        return read_windows(outDir + '/' + str(chrom), outFile)
+        return read_windows(outDir, outFile)
     else:
         expectedRecomb = pow(10, 8)/numGen
         maxWindowLen = expectedRecomb/recombFact
@@ -330,11 +330,6 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
     hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, \
                            global_params.phasedDirectory, translatedRefDataDirecotry)
     offsets = get_snp_offsets(chrom)
-    
-    print len(hapData)
-    print len(hapData[0])
-    print len(hapData[1])
-    print len(hapData[2])
 
     alleleFreq = compute_allele_frequencies(hapData)    
     genVec = []
@@ -394,14 +389,12 @@ def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, tr
     relSubWins = []
     for line in fileHandler:
         splitLine = line.split()
-        if int(splitLine[0]) in snpList: 
+        if splitLine[0] in snpList:
             relSubWins.append(nSubWin)
         nSubWin += 1
     fileHandler.close()
     
     res = []
-    print relSubWins
-    print len(relSubWins)
     for subWin in relSubWins:
         filename = subWinDir + '/chrom' + str(chrom) + '/pop0/win' + str(subWin)
         fileHandler = open(filename, 'r')
