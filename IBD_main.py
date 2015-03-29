@@ -191,7 +191,7 @@ for chrom in range(chromsToCompute):
         numGeneration = compute_generation(chrom + 1, \
                                            global_params.populationNames, \
                                            global_params.snpCount, \
-                                           chromProcessedDirectory, \
+                                           global_params.processedDataDirectory, \
                                            global_params.translatedRefDataDirecotry)
 
 
