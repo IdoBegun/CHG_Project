@@ -328,7 +328,7 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
         LDSnps.append(int(splitLine[0]))
     
     hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, \
-                           phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
+                           global_params.phasedDirectory, translatedRefDataDirecotry)
     offsets = get_snp_offsets(chrom)
 
     alleleFreq = compute_allele_frequencies(hapData)    
@@ -348,7 +348,7 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
 #                                 get_hap_data                                         #
 ################################################################################
 
-def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, subWinFile, translatedRefDataDirecotry):
+def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, translatedRefDataDirecotry):
     '''
     Input:
     snpList - list of relevant SNPs
@@ -396,7 +396,7 @@ def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, su
     
     res = []
     for subWin in relSubWins:
-        filename = subWinDir + '/' + str(chrom) + '/' + subWinFile + str(subWin)
+        filename = subWinDir + '/chrom' + str(chrom) + '/pop0/win' + str(subWin)
         fileHandler = open(filename, 'r')
         if not res: # subWin is the first window
             for line in fileHandler:
@@ -406,6 +406,6 @@ def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, su
             for line in fileHandler:
                 res[nLine] = res[nLine] + line[0]
                 nLine = nLine + 1
-    fileHandler.close()
+        fileHandler.close()
     hapData.append(res)
     return hapData

@@ -136,11 +136,11 @@ for chrom in range(chromsToCompute):
         print "--> --> compute_windows: Started for chromosome %s..." \
                 "" % (chrom + 1)
 
-    windowList = compute_windows(chromProcessedDirectory, hapData, \
+    windowList = compute_windows(processedDataDirectory, hapData, \
                                  global_params.beagleEpsilon, numGeneration, \
                                  chrom + 1, global_params.minInd, \
                                  global_params.snpCount, \
-                                 chromProcessedDirectory, \
+                                 processedDataDirectory, \
                                  global_params.windowListFile)
     
     load_ref_data_windows(hapData, chrom + 1, windowList, \
