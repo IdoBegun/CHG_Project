@@ -325,7 +325,7 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
     inputFileHandler = open(filename, 'r')
     for line in inputFileHandler:
         splitLine = line.split()
-        LDSnps.append(splitLine[0])
+        LDSnps.append(int(splitLine[0]))
     
     hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, \
                            phasedDirectory, phasedWindowFile, translatedRefDataDirecotry)
