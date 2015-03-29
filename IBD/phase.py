@@ -29,7 +29,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
     outputPath = outDir + '/' + str(chrom) + '/' + outFile
     if os.path.exists(outputPath):
         print "--> sub windows for chrom %s already created, skipping" % (chrom)
-        return read_windows(outDir, outFile)
+        return read_windows(outDir, outFile, chrom)
     else:
         expectedRecomb = pow(10, 8)/numGen
         maxWindowLen = expectedRecomb/recombFact
@@ -68,7 +68,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
 #                               read_windows                                #
 ################################################################################
 
-def read_windows(inDir, inFile):
+def read_windows(inDir, inFile, chrom):
     '''
 	Input:
 	inDir - name of directory with windows list
@@ -77,7 +77,7 @@ def read_windows(inDir, inFile):
 	Output:
 	winList - a list of windows with limited amount of SNPs 	and length. 
 	'''
-    path = inDir + '/' + inFile
+    path = inDir + '/' + str(chrom) + '/' + inFile
     fileHandler = open(path, 'r')
     winList = []
     for line in fileHandler:
