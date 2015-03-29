@@ -61,7 +61,7 @@ phasedDirectory = 'phasedSimulatorData'
 phasedWindowFile = 'phased_window'
 
 # file prefix of window list
-windowListFile = 'windowList'
+windowListFile = 'ld_windows'
 
 # initial number of generations
 initNumGen = 20
@@ -73,7 +73,7 @@ recombFact = 10
 maxWindowSNPs = 300
 
 # Location of the IBD executable file
-ibdExe = ""
+ibdExe = "exe"
 
 # Location of the BEAGLE executable file
 beagleExe = ""
