@@ -29,7 +29,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
     outputPath = outDir + '/' + str(chrom) + '/' + outFile
     if os.path.exists(outputPath):
         print "--> sub windows for chrom %s already created, skipping" % (chrom)
-        return read_windows(outDir, outFile)
+        return read_windows(outDir + '/' + str(chrom), outFile)
     else:
         expectedRecomb = pow(10, 8)/numGen
         maxWindowLen = expectedRecomb/recombFact
@@ -389,7 +389,7 @@ def get_hap_data(snpList, chrom, populationNames, winDir, winFile, subWinDir, tr
     relSubWins = []
     for line in fileHandler:
         splitLine = line.split()
-        if splitLine[0] in snpList:
+        if int(splitLine[0]) in snpList:
             relSubWins.append(nSubWin)
         nSubWin += 1
     fileHandler.close()
