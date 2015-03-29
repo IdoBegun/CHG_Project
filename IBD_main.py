@@ -34,7 +34,7 @@ if global_params.chromsToCompute == 0:
     global_params.chromsToCompute = global_params.numChrom
 
 print "################################################################################"
-print "Phase %s: Preprocessing reference data files" % phase
+print "Phase %s: Preprocessing reference data files" % global_params.phase
 ''
 print "--> Loading SNP data..."
 global_params.snpCount = count_snps_in_chrom()
@@ -88,7 +88,7 @@ print "--> Done"
 global_params.phase += 1   
 
 print "################################################################################"
-print "Phase %s: Preprocessing simulated data files" % phase
+print "Phase %s: Preprocessing simulated data files" % global_params.phase
 
 print "--> Preprocessing input data..."
 if os.path.exists(inputDataDirectory):
@@ -114,7 +114,7 @@ print "--> Done"
 global_params.phase += 1
 
 print "################################################################################"
-print "Phase %s: Phasing simulated data" % phase
+print "Phase %s: Phasing simulated data" % global_params.phase
 
 numGeneration = global_params.initNumGen
 for chrom in range(chromsToCompute):
@@ -198,7 +198,7 @@ for chrom in range(chromsToCompute):
 global_params.phase += 1
 
 print "################################################################################"
-print "Phase %s: Computing IBD" % phase
+print "Phase %s: Computing IBD" % global_params.phase
 
 workingDir = os.getcwd() + "/" + beaglePhaseDirectory + "/"
 personList = read_person_list_file()
@@ -217,7 +217,7 @@ for chrom in range(chromsToCompute):
 global_params.phase += 1
 
 print "################################################################################"
-print "Phase %s: Exporting results" % phase
+print "Phase %s: Exporting results" % global_params.phase
 
 resultsFileHandle = open(global_params.outputDataFilePrefix + \
                          global_params.inputFileNumber, 'w')

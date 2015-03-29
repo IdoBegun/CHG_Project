@@ -82,11 +82,11 @@ def read_windows(inDir, inFile):
     winList = []
     for line in fileHandler:
         split = line.split()
-        winStart = split[0]
-        winEnd = split[1]
+        winStart = int(split[0])
+        winEnd = int(split[1])
         winList.append([winStart, winEnd])
 
-	return winList
+    return winList
 
 ################################################################################
 #                            load_ref_data_windows                             #
