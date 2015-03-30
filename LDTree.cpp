@@ -234,12 +234,12 @@ void LDTree::freeNodes(LDNode* node, unsigned int depth)
   if (node->childrenPtr[0] != NULL)
   {
     nullDepthChildren(node, 0);
-    freeNodes(node->childrenPtr[0], depth);
+    freeNodes(node->childrenPtr[0], depth+1);
   }
   if (node->childrenPtr[1] != NULL)
   {
     nullDepthChildren(node, 1);
-    freeNodes(node->childrenPtr[1], depth);
+    freeNodes(node->childrenPtr[1], depth+1);
   }
   node->possibleStrings.clear();
   updateDepthArray(node, depth);

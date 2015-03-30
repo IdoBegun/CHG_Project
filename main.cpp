@@ -126,8 +126,8 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
         if ((origJA + origJB) != 0)
         {
           // origJA + origJB should be 1 ==> normalize the values
-          double normJA = origJA / (origJA + origJB);
-          double normJB = 1 - normJA;
+          normJA = origJA / (origJA + origJB);
+          normJB = 1 - normJA;
         }
         
         double ibdA = treeA.getIBDProbability(simulator[i], simulator[j], epsilon);
