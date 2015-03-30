@@ -46,8 +46,8 @@ void getDataFromFile(string& fileName, vector<string>& population)
 
 void getData(string& path, unsigned int chromozomeNumber, unsigned int window,
              vector<string>& simulator/*out*/,
-             vector<string> populationA/*out*/,
-             vector<string> populationB/*out*/)
+             vector<string>& populationA/*out*/,
+             vector<string>& populationB/*out*/)
 {
   // read the simulator data
   stringstream ssSimulator;
