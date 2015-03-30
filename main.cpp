@@ -112,13 +112,24 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
         double origIB = simulatorProbabilityB[i];
         double origJA = simulatorProbabilityA[j];
         double origJB = simulatorProbabilityB[j];
-        // origIA + origIB should be 1 ==> normalize the values
-        double normIA = origIA / (origIA + origIB);
-        double normIB = 1 - normIA;
-        // origJA + origJB should be 1 ==> normalize the values
-        double normJA = origJA / (origJA + origJB);
-        double normJB = 1 - normJA;
 
+        double normIA = 0;
+        double normIB = 0;
+        if ((origIA + origIB) != 0)
+        {
+          // origIA + origIB should be 1 ==> normalize the values
+          normIA = origIA / (origIA + origIB);
+          normIB = 1 - normIA;
+        }
+        double normJA = 0;
+        double normJB = 0;
+        if ((origJA + origJB) != 0)
+        {
+          // origJA + origJB should be 1 ==> normalize the values
+          double normJA = origJA / (origJA + origJB);
+          double normJB = 1 - normJA;
+        }
+        
         double ibdA = treeA.getIBDProbability(simulator[i], simulator[j], epsilon);
         double ibdB = treeB.getIBDProbability(simulator[i], simulator[j], epsilon);
         double totalIBD = 
@@ -129,7 +140,15 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
           simulatorProbabilityB[i] * simulatorProbabilityB[j] * normIB * normJB + // nonIBD(Hi,Hj|B) * Pr(Hi beolongs to B) * Pr(Hj beolongs to B)
           simulatorProbabilityA[i] * simulatorProbabilityB[j] * normIA * normJB + // nonIBD(Hi,Hj|HiA, HjB) * Pr(Hi beolongs to A) * Pr(Hj beolongs to B)
           simulatorProbabilityB[i] * simulatorProbabilityA[j] * normIB * normJA; // nonIBD(Hi,Hj|HiB, HjA) * Pr(Hi beolongs to B) * Pr(Hj beolongs to A)
-        windowScore[window][i][j] = totalIBD / totalNonIBD; // the window score for haplotypes i & j
+        if (totalNonIBD == 0)
+        {
+          // can't devide by zero ==> define the windowScore as 0 or 1
+          windowScore[window][i][j] = ((totalIBD == 0) ? 0 : 1);
+        }
+        else
+        {
+          windowScore[window][i][j] = totalIBD / totalNonIBD; // the window score for haplotypes i & j
+        }
         maxArgIBDWindow[window][i][j] = (ibdA > ibdB); // in which population there is a better chance for an IBD - true==>A, false==>B
         windowDiff[window][i][j] = abs(ibdA - ibdB); // what is the difference between the IBD probability in the populations
 
