@@ -108,12 +108,6 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
     {
       for (unsigned int j = i+1 ; j < simulator.size() ; j++)
       {
-        if (debug)
-        {
-          cout << "calculateWindows - window: " << window << "-" << numOfWindows-1 
-            << " haplotypes: " << i << "-" << j << " (" << simulator.size() << ")" << endl;
-        }
-
         double origIA = simulatorProbabilityA[i];
         double origIB = simulatorProbabilityB[i];
         double origJA = simulatorProbabilityA[j];
