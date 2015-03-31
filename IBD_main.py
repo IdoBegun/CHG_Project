@@ -172,15 +172,11 @@ for chrom in range(chromsToCompute):
         command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
                     ' ref=' + refPath + ' out=' + outputPath
         if not os.path.exists(outputPath + '.vcf'):
-            output = subprocess.check_output(command, shell=True)
-            if output:
-                print output
+            subprocess.check_call(command, shell=True)
             
             command = "gunzip " + outputPath + ".vcf.gz"
             
-            output = subprocess.check_output(command, shell=True)
-            if output:
-                print output
+            subprocess.check_call(command, shell=True)
     
     outputDir = global_params.phasedDirectory + '/chrom' + str(chrom + 1) + \
                 '/pop0/'
@@ -200,19 +196,23 @@ global_params.phase += 1
 print "################################################################################"
 print "Phase %s: Computing IBD" % global_params.phase
 
-workingDir = os.getcwd() + "/" + beaglePhaseDirectory + "/"
+workingDir = os.getcwd() + "/" + global_params.phasedDirectory + "/"
 personList = read_person_list_file()
 numHaps = len(personList) * 2  
 
 for chrom in range(chromsToCompute):
     print "--> Computing IBD for chromosome %s..." % (chrom + 1)
-    chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
-                                str(chrom + 1)
-    windowList = read_windows(chromProcessedDirectory, windowListFile)
+    if not os.path.exists(workingDir + 'chrom' + str(chrom + 1) + '/' + \
+                          global_params.ibdExeResultsFilename):
+        chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
+                                    str(chrom + 1)
+        windowList = read_windows(chromProcessedDirectory, windowListFile)
     
-    numWindows = len(windowList)
+        numWindows = len(windowList)
     
-    compute_ibd(global_params.ibdExe, workingDir, chrom, numWindows, numHaps)
+        compute_ibd(workingDir, chrom + 1, numWindows, numHaps)
+    else:
+        print "    --> Already computed, skipping"
 
 global_params.phase += 1
 
@@ -220,7 +220,7 @@ print "#########################################################################
 print "Phase %s: Exporting results" % global_params.phase
 
 resultsFileHandle = open(global_params.outputDataFilePrefix + \
-                         global_params.inputFileNumber, 'w')
+                         str(global_params.inputFileNumber), 'w')
 header = "name1\tname2\tchr_start\tstart\tchr_end\tend\n"
 resultsFileHandle.write(header)
 
@@ -230,9 +230,11 @@ for chrom in range(chromsToCompute):
     windowList = read_windows(chromProcessedDirectory, \
                               global_params.windowListFile)
     
-    fileResults = read_ibd_results(beaglePhaseDirectory, chrom + 1)
-    ibdResults = process_results(fileResults, chrom, personList, windowList)
-    export_results(resultsFileHandle, chrom, personList, ibdResults)
+    workingDir = global_params.phasedDirectory
+    
+    fileResults = read_ibd_results(workingDir, chrom + 1)
+    ibdResults = process_results(fileResults, chrom + 1, personList, windowList)
+    export_results(resultsFileHandle, chrom + 1, personList, ibdResults)
     
 
 resultsFileHandle.close()

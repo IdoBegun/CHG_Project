@@ -246,9 +246,7 @@ def create_beagle_sim_data(genData, chrom, windowList, outDir, outFile):
         
             command = 'gzip ' + filename
             
-            output = subprocess.check_output(command, shell=True)
-            if output:
-                print output
+            subprocess.check_call(command, shell=True)
             
         
 ################################################################################

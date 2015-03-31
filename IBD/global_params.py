@@ -27,7 +27,7 @@ snpInfoFilePrefix = "snpinfo"
 inputDataFilePrefix = "haplotypes"
 
 # Output file
-outputDataFilePrefix = "ibdresults1"
+outputDataFilePrefix = "ibdresults."
 
 # Directories
 # Directory of the simplified simulator data
@@ -56,6 +56,9 @@ beaglePhasedFile = 'beagle_phased_simulator'
 # directory used for beagle phase
 beaglePhaseDirectory = 'beagle_phase'
 
+# IBD exe results filename
+ibdExeResultsFilename = "results"
+
 # directory of phased haplotypes by chromosome and window
 phasedDirectory = 'phasedSimulatorData'
 phasedWindowFile = 'phased_window'
@@ -73,7 +76,7 @@ recombFact = 10
 maxWindowSNPs = 300
 
 # Location of the IBD executable file
-ibdExe = "exe"
+ibdExe = "./exe"
 
 # Location of the BEAGLE executable file
 beagleExe = ""
