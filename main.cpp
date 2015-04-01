@@ -74,6 +74,7 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
                       vector< vector< vector<double> > >& windowDiff/*out*/,
                       bool debug)
 {
+  cout << "CALCULATE WINDOWS" << endl;
   resizeVectors(numOfWindows, numOfHaplotypes, windowScore/*out*/, maxArgIBDWindow/*out*/, windowDiff/*out*/);
 
   for (unsigned int window = 0 ; window < numOfWindows ; window++)
@@ -218,6 +219,7 @@ void calculateBlocks(unsigned int numOfWindows, unsigned int numOfHaplotypes, un
                      vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes/*out*/,
                      bool debug)
 {
+  cout << "CALCULATE BLOCKS" << endl;
   unsigned int numOfBlocks = numOfWindows - blockSize + 1;
   IBDHaplotypes.resize(numOfBlocks);
 
@@ -266,6 +268,7 @@ void createResultFile(string& path, unsigned int chromozomeNumber,
                       vector< vector < pair < unsigned int, unsigned int> > >& IBDHaplotypes,
                       bool debug)
 {
+  cout << "CREATE RESULT FILE" << endl;
   stringstream ss;
   ss << path << "/chrom" << chromozomeNumber << "/results";
   string fileName = ss.str();
@@ -306,6 +309,17 @@ int main(int argc, char* argv[])
   unsigned int blockSize = atoi(argv[7]);
   double threshold = atof(argv[8]);
   double maxDiff = atof(argv[9]);
+
+  cout << "PARAMETERS" << endl;
+  cout << "debug: " << debug
+    << " path: " << path
+    << " chromozomeNumber: " << chromozomeNumber
+    << " numOfWindows: " << numOfWindows
+    << " numOfHaplotypes: " << numOfHaplotypes
+    << " epsilon: " << epsilon
+    << " blockSize: " << blockSize
+    << " threshold: " << threshold
+    << " maxDiff: " << maxDiff << endl;
 
   // the external vector goes over all the windows
   // the interior vectors go over every two persons
