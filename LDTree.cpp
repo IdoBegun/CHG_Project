@@ -1,5 +1,6 @@
 #include "LDTree.h"
 #include <assert.h>
+#include <math.h>
 #include <algorithm>
 #include <iostream>
 
@@ -267,21 +268,35 @@ unsigned int LDTree::getChildInfo(const LDNode* const parent, const char& SNP, L
   }
 }
 
-double LDTree::getHaplotypeProbability(const string& haplotype)
+double LDTree::getHaplotypeProbability(const string& haplotype, double forgivenessPercent)
 {
+  assert(this->depthArray.size()==haplotype.size());
+  int maxWrongSNP = (int)floor(haplotype.size() * forgivenessPercent / 100);
   double res = 1;
   LDNode* node = this->root;
   LDNode* child;
   unsigned int childNum;
+  int wrongCount = 0;
   for (unsigned int i = 0 ; i < haplotype.size(); i++)
   {
-    const char& SNP = haplotype[i];
+    char SNP = haplotype[i];
     childNum = getChildInfo(node, SNP, &child);
     if (childNum == 0)
     {
-      // such haplotype doesn't exist according to the reference data
-      // probably its probability is quite low
-      return 0;
+      if (wrongCount == maxWrongSNP)
+      {
+        // such haplotype doesn't exist according to the reference data
+        // probably its probability is quite low
+        return 0;
+      }
+      else
+      {
+        // assume the SNP is wrong --> take the other child
+        SNP = (SNP == '1') ? '0' : '1';
+        childNum = getChildInfo(node, SNP, &child);
+        assert(childNum!=0); // it isn't possible that both children of node will be NULL
+        wrongCount++;
+      }
     }
     res *= (double)childNum / (double)(node->childrenNum[0] + node->childrenNum[1]);
     node = child;
@@ -289,9 +304,10 @@ double LDTree::getHaplotypeProbability(const string& haplotype)
   return res;
 }
 
-double LDTree::getIBDProbability(const string& haplotype1, const string& haplotype2, double epsilon)
+double LDTree::getIBDProbability(const string& haplotype1, const string& haplotype2, double epsilon, double forgivenessPercent)
 {
   assert((this->depthArray.size()==haplotype1.size()) && (haplotype1.size()==haplotype2.size()));
+  int maxWrongSNP = (int)floor(haplotype1.size() * forgivenessPercent / 100);
   double res = 1;
   LDNode* node1 = this->root;
   LDNode* node2 = this->root;
@@ -299,17 +315,47 @@ double LDTree::getIBDProbability(const string& haplotype1, const string& haploty
   LDNode* child2;
   unsigned int child1Num, child2Num;
   double child1Prob, child2Prob;
+  int wrongCount1 = 0;
+  int wrongCount2 = 0;
   for (unsigned int i = 0; i < haplotype1.size(); i++)
   {
-    const char& SNP1 = haplotype1[i];
-    const char& SNP2 = haplotype2[i];
+    char SNP1 = haplotype1[i];
+    char SNP2 = haplotype2[i];
     child1Num = getChildInfo(node1, SNP1, &child1);
     child2Num = getChildInfo(node2, SNP2, &child2);
-    if ((child1Num==0) || (child2Num==0))
+    if (child1Num==0)
     {
-      // at least one of the haplotypes doesn't exist according to the reference data
-      // probably its probability is quite low
-      return 0;
+      if (wrongCount1 == maxWrongSNP)
+      {
+        // such haplotype doesn't exist according to the reference data
+        // probably its probability is quite low
+        return 0;
+      }
+      else
+      {
+        // assume the SNP is wrong --> take the other child
+        SNP1 = (SNP1 == '1') ? '0' : '1';
+        child1Num = getChildInfo(node1, SNP1, &child1);
+        assert(child1Num!=0); // it isn't possible that both children of node will be NULL
+        wrongCount1++;
+      }
+    }
+    if (child2Num==0)
+    {
+      if (wrongCount2 == maxWrongSNP)
+      {
+        // such haplotype doesn't exist according to the reference data
+        // probably its probability is quite low
+        return 0;
+      }
+      else
+      {
+        // assume the SNP is wrong --> take the other child
+        SNP2 = (SNP2 == '1') ? '0' : '1';
+        child2Num = getChildInfo(node2, SNP2, &child2);
+        assert(child2Num!=0); // it isn't possible that both children of node will be NULL
+        wrongCount2++;
+      }
     }
     child1Prob = (double)child1Num / (double)(node1->childrenNum[0] + node1->childrenNum[1]);
     child2Prob = (double)child2Num / (double)(node2->childrenNum[0] + node2->childrenNum[1]);

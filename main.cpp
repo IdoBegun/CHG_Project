@@ -68,7 +68,7 @@ void getData(string& path, unsigned int chromozomeNumber, unsigned int window,
   getDataFromFile(fileNamePopulationB, populationB/*out*/);
 }
 
-void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int numOfWindows, unsigned int numOfHaplotypes, double epsilon,
+void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int numOfWindows, unsigned int numOfHaplotypes, double epsilon, double forgivenessPercent,
                       vector< vector< vector<double> > >& windowScore/*out*/, 
                       vector< vector< vector<bool> > >& maxArgIBDWindow/*out*/, 
                       vector< vector< vector<double> > >& windowDiff/*out*/,
@@ -99,8 +99,8 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
     vector<double> simulatorProbabilityB(simulator.size(), 0);
     for (unsigned int i = 0 ; i < simulator.size() ; i++)
     {
-      simulatorProbabilityA[i] = treeA.getHaplotypeProbability(simulator[i]);
-      simulatorProbabilityB[i] = treeB.getHaplotypeProbability(simulator[i]);
+      simulatorProbabilityA[i] = treeA.getHaplotypeProbability(simulator[i], forgivenessPercent);
+      simulatorProbabilityB[i] = treeB.getHaplotypeProbability(simulator[i], forgivenessPercent);
     }
 
     // for each two persons, calculate the IBD probability and the nonIBD probability
@@ -131,8 +131,8 @@ void calculateWindows(string& path, unsigned int chromozomeNumber, unsigned int 
           normJB = 1 - normJA;
         }
         
-        double ibdA = treeA.getIBDProbability(simulator[i], simulator[j], epsilon);
-        double ibdB = treeB.getIBDProbability(simulator[i], simulator[j], epsilon);
+        double ibdA = treeA.getIBDProbability(simulator[i], simulator[j], epsilon, forgivenessPercent);
+        double ibdB = treeB.getIBDProbability(simulator[i], simulator[j], epsilon, forgivenessPercent);
         double totalIBD = 
           ibdA * normIA * normJA + // IBD(Hi,Hj|A) * Pr(Hi beolongs to A) * Pr(Hj beolongs to A)
           ibdB * normIB * normJB; // IBD(Hi,Hj|B) * Pr(Hi beolongs to B) * Pr(Hj beolongs to B)
@@ -297,6 +297,7 @@ void createResultFile(string& path, unsigned int chromozomeNumber,
 // 7. block size - number of windows in a block
 // 8. threshold for the block score
 // 9. the maximum difference between IBD in two population
+// 10. the wrong percent we asuume a haplotype can have
 int main(int argc, char* argv[])
 {
   // argv[0] is the path and name of the program itself
@@ -309,6 +310,7 @@ int main(int argc, char* argv[])
   unsigned int blockSize = atoi(argv[7]);
   double threshold = atof(argv[8]);
   double maxDiff = atof(argv[9]);
+  double forgivenessPercent = atof(argv[10]);
 
   cout << "PARAMETERS" << endl;
   cout << "debug: " << debug
@@ -329,7 +331,7 @@ int main(int argc, char* argv[])
   vector< vector< vector<double> > > windowDiff; // the difference between the IBD in population A and the IBD in population B for each two person
   
   // fill the above vectors for each window and for each two persons
-  calculateWindows(path, chromozomeNumber, numOfWindows, numOfHaplotypes, epsilon,
+  calculateWindows(path, chromozomeNumber, numOfWindows, numOfHaplotypes, epsilon, forgivenessPercent,
     windowScore/*out*/, maxArgIBDWindow/*out*/, windowDiff/*out*/, debug);
 
   // the external vector goes over all the blocks

@@ -12,8 +12,8 @@ class LDTree
 public:
   LDTree(const vector<string>& haplotypes, bool debug);
   ~LDTree();
-  double getHaplotypeProbability(const string& haplotype);
-  double getIBDProbability(const string& haplotype1, const string& haplotype2, double epsilon);
+  double getHaplotypeProbability(const string& haplotype, double forgivenessPercent);
+  double getIBDProbability(const string& haplotype1, const string& haplotype2, double epsilon, double forgivenessPercent);
   void printLDTree();
 
 private:
