@@ -110,4 +110,5 @@ snpCount = []
 
 # Debug
 DEBUG = True
-chromsToCompute = 2
+exeDEBUG = False
+chromsToCompute = 22

@@ -189,6 +189,8 @@ for chrom in range(chromsToCompute):
                                            global_params.snpCount, \
                                            global_params.processedDataDirectory, \
                                            global_params.translatedRefDataDirecotry)
+        
+        print "--> Estimated number of generations: %s" % str(numGeneration)
 
 
 global_params.phase += 1

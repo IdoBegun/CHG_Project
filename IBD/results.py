@@ -50,7 +50,7 @@ def compute_ibd(workingDir, chrom, numWindows, numHaps):
     '''
 
     command = global_params.ibdExe + ' ' + \
-                str(1 if global_params.DEBUG else 0) + ' ' + \
+                str(1 if global_params.exeDEBUG else 0) + ' ' + \
                 workingDir + ' ' + \
                 str(chrom) + ' ' + \
                 str(numWindows) + ' ' + \
@@ -58,8 +58,7 @@ def compute_ibd(workingDir, chrom, numWindows, numHaps):
                 str(global_params.ibdEpsilon) + ' ' + \
                 str(global_params.blockSize) + ' ' + \
                 str(global_params.ibdThreshold) + ' ' + \
-                str(global_params.maxDiff) + ' ' + \
-                " |& tee ibdlog." + str(chrom)
+                str(global_params.maxDiff)
     
     if global_params.DEBUG:
         print "    --> Executing:" + command
