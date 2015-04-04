@@ -50,7 +50,7 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
                 posEnd = posStart + 1
             res[-1][1] = winLDEnd
         
-            if (res[-1][1] - res[-1][0] < minInd) and (len(res) > 2):
+            if ((res[-1][1] - res[-1][0] + 1) < minInd) and (len(res) > 2):
                 res[-2][1] = winLDEnd
                 res = res[:-1]
             
