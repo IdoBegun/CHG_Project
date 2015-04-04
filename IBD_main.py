@@ -35,7 +35,7 @@ if global_params.chromsToCompute == 0:
 
 print "################################################################################"
 print "Phase %s: Preprocessing reference data files" % global_params.phase
-''
+
 print "--> Loading SNP data..."
 global_params.snpCount = count_snps_in_chrom()
 print "--> Done\n"
@@ -136,12 +136,12 @@ for chrom in range(chromsToCompute):
         print "--> --> compute_windows: Started for chromosome %s..." \
                 "" % (chrom + 1)
 
-    windowList = compute_windows(processedDataDirectory, hapData, \
+    windowList = compute_windows(chromProcessedDirectory, hapData, \
                                  global_params.beagleEpsilon, numGeneration, \
                                  chrom + 1, global_params.minInd, \
                                  global_params.snpCount, \
-                                 processedDataDirectory, \
-                                 global_params.windowListFile)
+                                 global_params.processedDataDirectory, \
+                                 global_params.smallWindowListFile)
     
     load_ref_data_windows(hapData, chrom + 1, windowList, \
                           global_params.phasedDirectory)
@@ -178,8 +178,7 @@ for chrom in range(chromsToCompute):
             
             subprocess.check_call(command, shell=True)
     
-    outputDir = global_params.phasedDirectory + '/chrom' + str(chrom + 1) + \
-                '/pop0/'
+    outputDir = outDir + '/'
     load_beagle_phased_data(chrom, windowList, outputDir, outputDir)
 
     if chrom == 0:
@@ -208,7 +207,7 @@ for chrom in range(chromsToCompute):
                           global_params.ibdExeResultsFilename):
         chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
                                     str(chrom + 1)
-        windowList = read_windows(chromProcessedDirectory, windowListFile)
+        windowList = read_windows(chromProcessedDirectory, global_params.smallWindowListFile)
     
         numWindows = len(windowList)
     
@@ -230,7 +229,7 @@ for chrom in range(chromsToCompute):
     chromProcessedDirectory = global_params.processedDataDirectory + '/' + \
                                 str(chrom + 1)
     windowList = read_windows(chromProcessedDirectory, \
-                              global_params.windowListFile)
+                              global_params.smallWindowListFile)
     
     workingDir = global_params.phasedDirectory
     

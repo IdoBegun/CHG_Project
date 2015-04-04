@@ -131,14 +131,12 @@ def load_LD_ind_windows(directory, hapData):
     Input:
     directory - Directory to save the data to or load from
     hapData - A list of haplotypa data (strings)
-    epsilon - Maximum threshold for LD score
-    minInd - Minimum number of SNPs in each window
     
     Output:
     List of LD windows. The list is loaded from a file if it exists, otherwise
     the file is created
     '''
-    filename = directory + '/ld_windows'
+    filename = directory + '/' + global_params.windowListFile
     if not os.path.exists(filename):
         print "    --> Computing LD windows..."
         res = compute_LD_ind_windows(hapData)

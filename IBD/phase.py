@@ -31,8 +31,8 @@ def compute_windows(inDir, hapData, epsilon, numGen, chrom, minInd, snpCount, ou
         print "--> sub windows for chrom %s already created, skipping" % (chrom)
         return read_windows(outDir + '/' + str(chrom), outFile)
     else:
-        expectedRecomb = pow(10, 8)/numGen
-        maxWindowLen = expectedRecomb/recombFact
+        expectedRecomb = pow(10, 8) / numGen
+        maxWindowLen = expectedRecomb / global_params.recombFact
         res = []
         winLD = load_LD_ind_windows(inDir, hapData)
         offsets = get_snp_offsets(chrom) 
@@ -75,7 +75,7 @@ def read_windows(inDir, inFile):
 	inFile - name of file with windows list
 
 	Output:
-	winList - a list of windows with limited amount of SNPs 	and length. 
+	winList - a list of windows with limited amount of SNPs and length. 
 	'''
     path = inDir + '/' + inFile
     fileHandler = open(path, 'r')
@@ -318,14 +318,14 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
     Number of generations passed since admixture.
     '''
 
-    filename = winDir + '/' + str(chrom) + '/ld_windows'
+    filename = winDir + '/' + str(chrom) + '/' + global_params.windowListFile
     LDSnps = []
     inputFileHandler = open(filename, 'r')
     for line in inputFileHandler:
         splitLine = line.split()
         LDSnps.append(int(splitLine[0]))
     
-    hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, windowListFile, \
+    hapData = get_hap_data(LDSnps, chrom, populationNames, processedDataDirectory, global_params.smallWindowListFile, \
                            global_params.phasedDirectory, translatedRefDataDirecotry)
     offsets = get_snp_offsets(chrom)
 
@@ -342,10 +342,12 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
         tmp = abs(nom / denom)
         if tmp == 0:
             continue
-        n = math.log(tmp) / (-d)            
-        genVec.append(n)
+        n = math.log(tmp) / (-d)
+        print "Generation according to " + str(LDSnps[iSnp]) + " and " + str(LDSnps[jSnp]) + " is " + str(n) 
+        print "corr = " + str(corr) + " d = " + str(d) + " nom = " + str(nom) + " denom = " + str(denom) + " tmp = " + str(tmp)
+        genVec.append(int(n))
             
-    return sum(x for x in genVec) / len(genVec)
+    return int(sum(x for x in genVec) / len(genVec))
             
 
 ################################################################################

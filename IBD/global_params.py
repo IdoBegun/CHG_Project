@@ -65,9 +65,10 @@ phasedWindowFile = 'phased_window'
 
 # file prefix of window list
 windowListFile = 'ld_windows'
+smallWindowListFile = 'smallWindowList'
 
 # initial number of generations
-initNumGen = 20
+initNumGen = 50
 
 # Recombination factor
 recombFact = 10
@@ -102,6 +103,9 @@ ibdThreshold = 1.5
 
 # Maximum difference between IBD scores between populations
 maxDiff = 0.3
+
+# IBD forgiveness
+fogiveness = 0.1
 
 phase = 1
 

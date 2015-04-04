@@ -58,7 +58,9 @@ def compute_ibd(workingDir, chrom, numWindows, numHaps):
                 str(global_params.ibdEpsilon) + ' ' + \
                 str(global_params.blockSize) + ' ' + \
                 str(global_params.ibdThreshold) + ' ' + \
-                str(global_params.maxDiff)
+                str(global_params.maxDiff) + ' ' + \
+                str(global_params.fogiveness) + ' ' + \
+                " |& tee ibdlog." + str(chrom)
     
     if global_params.DEBUG:
         print "    --> Executing:" + command
