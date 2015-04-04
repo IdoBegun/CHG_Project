@@ -331,19 +331,19 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
 
     alleleFreq = compute_allele_frequencies(hapData)    
     genVec = []
-    for iSnp in range(len(LDSnps)):
-        for jSnp in range(iSnp + 1, len(LDSnps)):
-            corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
-            d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1] 
-            nom = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp])
-            denom = (alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp])
-            if denom == 0:
-                continue
-            tmp = abs(nom / denom)
-            if tmp == 0:
-                continue
-            n = math.log(tmp) / (-d)            
-            genVec.append(n)
+    for iSnp in range(len(LDSnps) - 1):
+        jSnp = iSnp + 1
+        corr = compute_allele_correlation(hapData[2], iSnp, jSnp)
+        d = offsets[LDSnps[jSnp] - 1] - offsets[LDSnps[iSnp] - 1] 
+        nom = 4 * (corr - alleleFreq[2][iSnp] * alleleFreq[2][jSnp])
+        denom = (alleleFreq[0][iSnp] - alleleFreq[1][iSnp]) * (alleleFreq[0][jSnp] - alleleFreq[1][jSnp])
+        if denom == 0:
+            continue
+        tmp = abs(nom / denom)
+        if tmp == 0:
+            continue
+        n = math.log(tmp) / (-d)            
+        genVec.append(n)
             
     return sum(x for x in genVec) / len(genVec)
             
