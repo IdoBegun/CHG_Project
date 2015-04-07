@@ -181,6 +181,8 @@ for chrom in range(chromsToCompute):
     outputDir = outDir + '/'
     load_beagle_phased_data(chrom, windowList, outputDir, outputDir)
 
+'''
+    # we wrong by calculating the generation number according to admixed population with random mating
     if chrom == 0:
         # update the number of generations according to the first chromosome
         numGeneration = compute_generation(chrom + 1, \
@@ -190,7 +192,7 @@ for chrom in range(chromsToCompute):
                                            global_params.translatedRefDataDirecotry)
         
         print "--> Estimated number of generations: %s" % str(numGeneration)
-
+'''
 
 global_params.phase += 1
 
