@@ -169,7 +169,7 @@ for chrom in range(chromsToCompute):
                     str(iWindow) + '.vcf'
         outputPath = global_params.phasedDirectory + '/chrom' + \
                         str(chrom + 1) + '/pop0/win' + str(iWindow)
-        command = 'java -Xmx2000m -jar beagle.r1399.jar gt=' + winPath + \
+        command = global_params.beagleExe + ' gt=' + winPath + \
                     ' ref=' + refPath + ' out=' + outputPath
         if not os.path.exists(outputPath + '.vcf'):
             subprocess.check_call(command, shell=True)

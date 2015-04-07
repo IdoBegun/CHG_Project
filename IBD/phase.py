@@ -343,11 +343,9 @@ def compute_generation(chrom, populationNames, snpCount, winDir, translatedRefDa
         if tmp == 0:
             continue
         n = math.log(tmp) / (-d)
-        print "Generation according to " + str(LDSnps[iSnp]) + " and " + str(LDSnps[jSnp]) + " is " + str(n) 
-        print "corr = " + str(corr) + " d = " + str(d) + " nom = " + str(nom) + " denom = " + str(denom) + " tmp = " + str(tmp)
-        genVec.append(int(n))
+        genVec.append(int(math.ceil(n)))
             
-    return int(sum(x for x in genVec) / len(genVec))
+    return int(math.ceil(sum(x for x in genVec) / len(genVec)))
             
 
 ################################################################################

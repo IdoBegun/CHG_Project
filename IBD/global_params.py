@@ -80,7 +80,7 @@ maxWindowSNPs = 300
 ibdExe = "./exe"
 
 # Location of the BEAGLE executable file
-beagleExe = ""
+beagleExe = "java -Xmx2000m -jar beagle.r1399.jar"
 
 # When calculating dependencies between SNPs, this is the maximum value
 # we consider as independent
