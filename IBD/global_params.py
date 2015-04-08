@@ -105,7 +105,7 @@ ibdThreshold = 1.5
 maxDiff = 0.3
 
 # IBD forgiveness
-fogiveness = 0.1
+fogiveness = 1
 
 phase = 1
 
